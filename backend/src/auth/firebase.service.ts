@@ -5,14 +5,20 @@ import * as admin from 'firebase-admin';
 export class FirebaseService implements OnModuleInit {
   onModuleInit() {
     if (admin.apps.length === 0) {
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
       
+      // Clean up the key from common copy-paste issues
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.substring(1, privateKey.length - 1);
+      }
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
       try {
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: process.env.FIREBASE_PROJECT_ID || 'dummy-project-id',
             clientEmail: process.env.FIREBASE_CLIENT_EMAIL || 'dummy@example.com',
-            privateKey: privateKey || '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQD...\n-----END PRIVATE KEY-----\n',
+            privateKey: privateKey,
           }),
         });
         console.log('Firebase Admin initialized');
