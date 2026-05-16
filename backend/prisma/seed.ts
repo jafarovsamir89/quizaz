@@ -40,9 +40,12 @@ async function main() {
   ];
 
   for (const category of categories) {
-    await prisma.category.create({
-      data: category,
-    });
+    const existing = await prisma.category.findFirst({ where: { nameAz: category.nameAz } });
+    if (!existing) {
+      await prisma.category.create({
+        data: category,
+      });
+    }
   }
 
   console.log('Seed categories completed.');
@@ -58,17 +61,20 @@ async function main() {
     });
 
     if (category) {
-      await prisma.question.create({
-        data: {
-          textAz: q.textAz,
-          options: q.options,
-          correctOption: q.correctOption,
-          difficulty: q.difficulty,
-          explanationAz: q.explanationAz || null,
-          categoryId: category.id,
-          status: 'active',
-        },
-      });
+      const existingQ = await prisma.question.findFirst({ where: { textAz: q.textAz } });
+      if (!existingQ) {
+        await prisma.question.create({
+          data: {
+            textAz: q.textAz,
+            options: q.options,
+            correctOption: q.correctOption,
+            difficulty: q.difficulty,
+            explanationAz: q.explanationAz || null,
+            categoryId: category.id,
+            status: 'active',
+          },
+        });
+      }
     }
   }
 
