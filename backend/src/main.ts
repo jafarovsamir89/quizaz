@@ -10,17 +10,27 @@ async function bootstrap() {
   app.use(helmet());
 
   // ─── CORS ─────────────────────────────────────────────────────────────────
-  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const allowedOrigins = frontendUrl
     .split(',')
-    .map((o) => o.trim());
+    .map((o) => o.trim().replace(/\/$/, '')); // Remove trailing slashes
 
   app.enableCors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
+      
+      const cleanOrigin = origin.replace(/\/$/, '');
+      if (allowedOrigins.includes(cleanOrigin) || allowedOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Origin ${origin} blocked. Allowed: ${allowedOrigins.join(', ')}`);
+        callback(new Error('Not allowed by CORS'));
+      }
     },
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Accept,Authorization',
   });
 
   // ─── Validation ───────────────────────────────────────────────────────────
