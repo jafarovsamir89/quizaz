@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authApi, profileApi } from '../../shared/api';
+import { authApi } from '../../shared/api';
 import { loginAnonymously, getToken, onAuth } from '../../shared/api/firebase';
 import type { UserProfile } from '../../shared/types';
 
