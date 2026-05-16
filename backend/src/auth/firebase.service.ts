@@ -9,11 +9,11 @@ export class FirebaseService implements OnModuleInit {
         let credential;
         
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-          // Priority 1: Full JSON string
           const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
-          // Find the first { and last } to extract only the JSON object
+          console.log(`[Diagnostic] FIREBASE_SERVICE_ACCOUNT starts with: "${rawJson.substring(0, 10)}..." (length: ${rawJson.length})`);
+          
           const jsonMatch = rawJson.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('No JSON object found in FIREBASE_SERVICE_ACCOUNT');
+          if (!jsonMatch) throw new Error('No JSON object (braces) found in FIREBASE_SERVICE_ACCOUNT string');
           
           const serviceAccount = JSON.parse(jsonMatch[0]);
           credential = admin.credential.cert(serviceAccount);
