@@ -3,9 +3,9 @@ import { useAuthStore } from '../features/auth/authStore';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../shared/ui/Toast';
 import { Button } from '../shared/ui/Button';
-import { ChevronLeft, AlertTriangle, CheckCircle2, XCircle, Trash2, Upload } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, XCircle, Trash2, Upload } from 'lucide-react';
 import api from '../shared/api/base';
-import type { Category } from '../shared/types';
+
 
 interface QuestionReport {
   id: number;
@@ -142,7 +142,7 @@ export const AdminPage: React.FC = () => {
           <ChevronLeft size={22} />
         </button>
         <h1>Admin Panel</h1>
-        <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)', background: 'rgba(255,68,119,0.1)', padding: '4px 10px', borderRadius: 999, border: '1px solid rgba(255,68,119,0.2)', color: 'var(--error)' }}>
+        <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(255,68,119,0.1)', padding: '4px 10px', borderRadius: 999, border: '1px solid rgba(255,68,119,0.2)', color: 'var(--error)' }}>
           Admin
         </span>
       </div>
