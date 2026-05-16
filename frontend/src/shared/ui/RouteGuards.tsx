@@ -27,7 +27,7 @@ export const SoloGameGuard: React.FC<{ children: React.ReactNode }> = ({ childre
  * Redirects to /duels if no duel exists.
  */
 export const DuelGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentDuelId, results } = useDuelStore();
+  const { currentDuelId } = useDuelStore();
 
   // Allow result/waiting pages if duel context exists
   const path = window.location.pathname;

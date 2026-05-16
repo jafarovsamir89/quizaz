@@ -13,7 +13,7 @@ export const DuelsPage: React.FC = () => {
   const [myDuels, setMyDuels] = useState<Duel[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { findOrCreate, setDuelFromApi } = useDuelStore();
+  const { findOrCreate } = useDuelStore();
   const { user } = useAuthStore();
   const { showToast } = useToast();
 

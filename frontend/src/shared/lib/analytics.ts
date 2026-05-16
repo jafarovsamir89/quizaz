@@ -9,7 +9,7 @@ type EventName =
   | 'question_reported';
 
 export const analytics = {
-  logEvent: (name: EventName, params?: Record<string, any>) => {
+  logEvent: (_name: EventName, _params?: Record<string, any>) => {
     // console.log(`[Analytics] ${name}`, params);
     // Future: Firebase Analytics integration
     // if (typeof window !== 'undefined' && (window as any).gtag) {
