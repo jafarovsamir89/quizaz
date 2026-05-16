@@ -1,0 +1,151 @@
+[
+  {
+    "categoryId": 1,
+    "textAz": "Azərbaycan Xalq Cümhuriyyəti neçənci ildə yaranmışdır?",
+    "options": { "a": "1918", "b": "1920", "c": "1917", "d": "1921" },
+    "correctOption": "a",
+    "difficulty": 1,
+    "explanationAz": "28 may 1918-ci ildə Tiflisdə Azərbaycan Milli Şurası tərəfindən İstiqlal Bəyannaməsi imzalanmışdır."
+  },
+  {
+    "categoryId": 1,
+    "textAz": "Şah İsmayıl Xətai hansı dövlətin əsasını qoymuşdur?",
+    "options": { "a": "Səlcuqlu", "b": "Səfəvi", "c": "Atabəylər", "d": "Ağqoyunlu" },
+    "correctOption": "b",
+    "difficulty": 2,
+    "explanationAz": "1501-ci ildə Şah İsmayıl Səfəvi dövlətinin əsasını qoymuşdur."
+  },
+  {
+    "categoryId": 2,
+    "textAz": "Azərbaycanın ən hündür zirvəsi hansıdır?",
+    "options": { "a": "Şahdağ", "b": "Bazardüzü", "c": "Tufandağ", "d": "Murovdağ" },
+    "correctOption": "b",
+    "difficulty": 1,
+    "explanationAz": "Bazardüzü zirvəsi 4466 metr hündürlüklə Azərbaycanın ən yüksək nöqtəsidir."
+  },
+  {
+    "categoryId": 3,
+    "textAz": "Şuşa şəhəri rəsmi olaraq Azərbaycanın nəyi elan edilib?",
+    "options": { "a": "İdman paytaxtı", "b": "Mədəniyyət paytaxtı", "c": "Sənaye mərkəzi", "d": "Dini mərkəz" },
+    "correctOption": "b",
+    "difficulty": 1,
+    "explanationAz": "Prezident İlham Əliyevin sərəncamı ilə Şuşa Azərbaycanın mədəniyyət paytaxtı elan edilmişdir."
+  },
+  {
+    "categoryId": 3,
+    "textAz": "Qarabağın rəmzi sayılan gül hansıdır?",
+    "options": { "a": "Qızılgül", "b": "Xarıbülbül", "c": "Zanbaq", "d": "Nərgiz" },
+    "correctOption": "b",
+    "difficulty": 1,
+    "explanationAz": "Xarıbülbül Qarabağın və xüsusilə Şuşanın rəmzi hesab olunur."
+  },
+  {
+    "categoryId": 2,
+    "textAz": "Xəzər dənizindən sonra Azərbaycanın ən böyük gölü hansıdır?",
+    "options": { "a": "Göy-göl", "b": "Sarısu", "c": "Maralgöl", "d": "Batabat" },
+    "correctOption": "b",
+    "difficulty": 3,
+    "explanationAz": "Sarısu gölü Azərbaycanın ən böyük şirin sulu gölüdür."
+  },
+  {
+    "categoryId": 1,
+    "textAz": "Nadir şah hansı sülalənin nümayəndəsi idi?",
+    "options": { "a": "Qacar", "b": "Əfşar", "c": "Səfəvi", "d": "Pəhləvi" },
+    "correctOption": "b",
+    "difficulty": 2
+  },
+  {
+    "categoryId": 5,
+    "textAz": "İlk Azərbaycan operasının müəllifi kimdir?",
+    "options": { "a": "Fikrət Əmirov", "b": "Üzeyir Hacıbəyli", "c": "Qara Qarayev", "d": "Müslüm Maqomayev" },
+    "correctOption": "b",
+    "difficulty": 1,
+    "explanationAz": "1908-ci ildə səhnələşdirilən 'Leyli və Məcnun' operası ilə Üzeyir Hacıbəyli Şərqdə ilk operanın əsasını qoymuşdur."
+  },
+  {
+    "categoryId": 4,
+    "textAz": "Bakıda yerləşən 'Qız Qalası' hansı əsrdə tikilmişdir?",
+    "options": { "a": "XII əsr", "b": "XV əsr", "c": "XVIII əsr", "d": "X əsr" },
+    "correctOption": "a",
+    "difficulty": 3
+  },
+  {
+    "categoryId": 8,
+    "textAz": "Qarabağ FK komandasının ləqəbi nədir?",
+    "options": { "a": "Canavarlar", "b": "Köhlən atlar", "c": "Qartallar", "d": "Neftçilər" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 9,
+    "textAz": "Dünyada ən çox əhalisi olan ölkə hansıdır?",
+    "options": { "a": "ABŞ", "b": "Hindistan", "c": "Çin", "d": "Rusiya" },
+    "correctOption": "b",
+    "difficulty": 1,
+    "explanationAz": "2023-cü ildən etibarən Hindistan əhalisinin sayına görə Çini geridə qoymuşdur."
+  },
+  {
+    "categoryId": 1,
+    "textAz": "Azərbaycanın ilk Milli Qəhrəmanlarından biri kimdir?",
+    "options": { "a": "Albert Aqarunov", "b": "Mübariz İbrahimov", "c": "Polad Həşimov", "d": "Hamısı" },
+    "correctOption": "d",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 2,
+    "textAz": "Kür çayı hansı dənizə tökülür?",
+    "options": { "a": "Qara dəniz", "b": "Xəzər dənizi", "c": "Aral dənizi", "d": "Aralıq dənizi" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 6,
+    "textAz": "Muğam sənətində neçə əsas muğam var?",
+    "options": { "a": "5", "b": "7", "c": "12", "d": "9" },
+    "correctOption": "b",
+    "difficulty": 2,
+    "explanationAz": "Rast, Şur, Segah, Çahargah, Bayatı-Şiraz, Humayun və Şüştər əsas muğamlardır."
+  },
+  {
+    "categoryId": 7,
+    "textAz": "Hansı filmdə 'Məşədi İbad' obrazı var?",
+    "options": { "a": "Arşın mal alan", "b": "O olmasın, bu olsun", "c": "Bəxtiyar", "d": "Qaynana" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 3,
+    "textAz": "Xudafərin körpüsü hansı çayın üzərindədir?",
+    "options": { "a": "Kür", "b": "Araz", "c": "Tərtər", "d": "Həkəri" },
+    "correctOption": "b",
+    "difficulty": 2
+  },
+  {
+    "categoryId": 9,
+    "textAz": "Gündəlik həyatda ən çox istifadə olunan 'H2O' nəyin kimyəvi formuludur?",
+    "options": { "a": "Hava", "b": "Su", "c": "Qənd", "d": "Duz" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 9,
+    "textAz": "Hansı planet 'Qırmızı planet' adlanır?",
+    "options": { "a": "Venera", "b": "Mars", "c": "Yupiter", "d": "Saturn" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 4,
+    "textAz": "Baku Crystal Hall hansı yarışma üçün tikilmişdir?",
+    "options": { "a": "Formula 1", "b": "Eurovision 2012", "c": "İslam Oyunları", "d": "Olimpiada" },
+    "correctOption": "b",
+    "difficulty": 1
+  },
+  {
+    "categoryId": 5,
+    "textAz": "Nizami Gəncəvinin 'Xəmsə'sinə neçə poema daxildir?",
+    "options": { "a": "3", "b": "5", "c": "7", "d": "4" },
+    "correctOption": "b",
+    "difficulty": 1
+  }
+]

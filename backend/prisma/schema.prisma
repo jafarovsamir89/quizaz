@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  firebaseUid     String   @unique
+  email           String?  @unique
+  googleId        String?  @unique
+  guestId         String?  @unique
+  nickname        String
+  avatarUrl       String?
+  cityId          Int?
+  city            City?    @relation(fields: [cityId], references: [id])
+  level           Int      @default(1)
+  xp              Int      @default(0)
+  balanceCoins    Int      @default(100)
+  isAdmin         Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  walletTransactions WalletTransaction[]
+  cityPointsLogs     CityPointsLog[]
+  gameSessions       GameSession[]
+  questionReports    QuestionReport[]
+  initiatorDuels     Duel[] @relation("InitiatorDuels")
+  opponentDuels      Duel[] @relation("OpponentDuels")
+}
+
+model City {
+  id      Int      @id @default(autoincrement())
+  nameAz  String
+  nameEn  String
+  slug    String   @unique
+  users   User[]
+  pointsLogs CityPointsLog[]
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  nameAz    String
+  iconUrl   String?
+  questions Question[]
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  categoryId    Int
+  category      Category @relation(fields: [categoryId], references: [id])
+  textAz        String
+  options       Json     // { a: string, b: string, c: string, d: string }
+  correctOption String   // "a", "b", "c", or "d"
+  difficulty    Int      @default(1)
+  explanationAz String?
+  status        String   @default("active") // active, flagged, draft, deleted
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  reports       QuestionReport[]
+}
+
+model GameSession {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  mode        String   @default("solo") // solo, tournament, duel
+  categoryId  Int?
+  questionIds Int[]
+  answersJson Json?    // { "q_id": { "choice": "a", "time": 4200, "correct": true, "score": 130 } }
+  totalScore  Int      @default(0)
+  correctCount Int     @default(0)
+  wrongCount   Int     @default(0)
+  coinsEarned Int      @default(0)
+  xpEarned    Int      @default(0)
+  status      String   @default("active") // active, finished, expired
+  createdAt   DateTime @default(now())
+  finishedAt  DateTime?
+
+  @@index([userId, status, finishedAt])
+  @@index([status, finishedAt])
+}
+
+model WalletTransaction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  amount          Int
+  type            String   // earn, spend
+  transactionType String   // reward_ad, duel_win, shop_purchase, etc.
+  metadata        Json?
+  createdAt       DateTime @default(now())
+}
+
+model CityPointsLog {
+  id        BigInt   @id @default(autoincrement())
+  cityId    Int
+  city      City     @relation(fields: [cityId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  source    String   // solo, duel, tournament
+  createdAt DateTime @default(now())
+
+  @@index([cityId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Duel {
+  id                String   @id @default(uuid())
+  initiatorId       String
+  initiator         User     @relation("InitiatorDuels", fields: [initiatorId], references: [id])
+  opponentId        String?
+  opponent          User?    @relation("OpponentDuels", fields: [opponentId], references: [id])
+  
+  questionIds       Int[]
+  initiatorAnswers  Json?    // { "q_id": { "choice": "a", "time": 4200, "correct": true, "score": 130 } }
+  opponentAnswers   Json?
+  
+  initiatorScore    Int      @default(0)
+  opponentScore     Int      @default(0)
+  
+  winnerId          String?
+  status            String   @default("pending") // pending, active, finished, expired, cancelled
+  
+  entryFeeCoins     Int      @default(0)
+  prizeCoins        Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  expiresAt         DateTime
+
+  @@index([initiatorId, status])
+  @@index([opponentId, status])
+  @@index([status, expiresAt])
+}
+
+model QuestionReport {
+  id           Int      @id @default(autoincrement())
+  questionId   Int
+  question     Question @relation(fields: [questionId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  reason       String
+  adminComment String?
+  status       String   @default("open") // open, resolved, ignored
+  createdAt    DateTime @default(now())
+}
