@@ -20,6 +20,7 @@ export const CitySelectionPage: React.FC = () => {
     try {
       await profileApi.updateCity(selected);
       updateUser({ cityId: selected, city: cities.find(c => c.id === selected) });
+      window.location.href = '/'; // Hard redirect to refresh state if needed, or use navigate
     } catch (err) {
       console.error(err);
     } finally {

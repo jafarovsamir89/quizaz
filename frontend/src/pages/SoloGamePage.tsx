@@ -49,13 +49,17 @@ export const SoloGamePage: React.FC = () => {
         if (nextStep >= questions.length) {
           handleFinish();
         } else {
+          // Important: state reset is also handled by useEffect on currentStep change
           isAnsweringRef.current = false;
         }
       }, 1500);
     } catch (err: any) {
+      console.error('Answer submission failed:', err);
       const msg = err?.response?.data?.message || 'Cavab göndərilmədi';
       showToast(msg, 'error');
       isAnsweringRef.current = false;
+      // If unauthorized or session expired, go home
+      if (err?.response?.status === 401) navigate('/');
     }
   }, [currentQuestion, submitAnswer, questions.length, handleFinish]);
 
