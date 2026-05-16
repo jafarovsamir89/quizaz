@@ -16,8 +16,8 @@ export class FirebaseService implements OnModuleInit {
           }),
         });
         console.log('Firebase Admin initialized');
-      } catch (e) {
-        console.warn('Firebase Admin failed to initialize. Check .env variables.');
+      } catch (e: any) {
+        console.warn('Firebase Admin failed to initialize:', e.message);
       }
     }
   }
