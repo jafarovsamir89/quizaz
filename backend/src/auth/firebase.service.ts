@@ -10,7 +10,7 @@ export class FirebaseService implements OnModuleInit {
         
         if (process.env.FIREBASE_SERVICE_ACCOUNT) {
           // Priority 1: Full JSON string
-          const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+          const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT.trim());
           credential = admin.credential.cert(serviceAccount);
         } else {
           // Priority 2: Individual variables
