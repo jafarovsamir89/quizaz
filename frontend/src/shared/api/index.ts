@@ -9,6 +9,7 @@ export const profileApi = {
   getStats: () => api.get('/profile/stats'),
   updateCity: (cityId: number) => api.patch('/profile/city', { cityId }),
   updateMe: (data: any) => api.patch('/profile/me', data),
+  claimDailyBonus: () => api.post('/profile/daily-bonus'),
 };
 
 export const metadataApi = {

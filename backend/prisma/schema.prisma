@@ -21,6 +21,7 @@ model User {
   xp              Int      @default(0)
   balanceCoins    Int      @default(100)
   isAdmin         Boolean  @default(false)
+  lastDailyBonusAt DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

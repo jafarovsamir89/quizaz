@@ -36,6 +36,7 @@ export interface UserProfile {
   xp: number;
   balanceCoins: number;
   isAdmin: boolean;
+  lastDailyBonusAt?: string;
   createdAt: string;
 }
 

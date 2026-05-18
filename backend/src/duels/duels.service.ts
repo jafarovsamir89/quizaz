@@ -10,8 +10,8 @@ export class DuelsService {
   ) {}
 
   async findOrCreate(userId: string) {
-    // 1. Return existing active duel for this user (resume support)
-    const existingActiveDuel = await this.prisma.duel.findFirst({
+    // 1. Return existing active duel for this user if they haven't finished their turns (resume support)
+    const activeDuels = await this.prisma.duel.findMany({
       where: {
         OR: [{ initiatorId: userId }, { opponentId: userId }],
         status: 'active',
@@ -20,8 +20,15 @@ export class DuelsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (existingActiveDuel) {
-      return this.getDuelWithQuestions(existingActiveDuel, userId);
+    const unfinishedActiveDuel = activeDuels.find((duel) => {
+      const isInitiator = duel.initiatorId === userId;
+      const answers: any = isInitiator ? (duel.initiatorAnswers || {}) : (duel.opponentAnswers || {});
+      const answeredCount = Object.keys(answers).length;
+      return answeredCount < duel.questionIds.length;
+    });
+
+    if (unfinishedActiveDuel) {
+      return this.getDuelWithQuestions(unfinishedActiveDuel, userId);
     }
 
     // 2. Join a pending duel from someone else
@@ -35,6 +42,10 @@ export class DuelsService {
     });
 
     if (pendingDuel) {
+      // Spend entry fee for opponent
+      const entryFee = pendingDuel.entryFeeCoins || 10;
+      await this.wallet.spendCoins(userId, entryFee, 'duel_entry_fee', { duelId: pendingDuel.id });
+
       const updatedDuel = await this.prisma.duel.update({
         where: { id: pendingDuel.id },
         data: {
@@ -61,6 +72,10 @@ export class DuelsService {
 
     if (questions.length < 7) throw new BadRequestException('Not enough questions for a duel');
 
+    const entryFee = 10;
+    // Check and spend entry fee for initiator
+    await this.wallet.spendCoins(userId, entryFee, 'duel_entry_fee', { questionIds: questions.map(q => q.id) });
+
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
@@ -70,6 +85,7 @@ export class DuelsService {
         questionIds: questions.map((q) => q.id),
         status: 'pending',
         expiresAt,
+        entryFeeCoins: entryFee,
         initiatorAnswers: {},
         opponentAnswers: {},
       },
@@ -125,6 +141,10 @@ export class DuelsService {
 
     const answers: any = isInitiator ? (duel.initiatorAnswers || {}) : (duel.opponentAnswers || {});
     if (answers[questionId]) throw new BadRequestException('Already answered');
+
+    if (!duel.questionIds.includes(questionId)) {
+      throw new BadRequestException('Question not in this duel');
+    }
 
     const question = await this.prisma.question.findUnique({ where: { id: questionId } });
     if (!question) throw new BadRequestException('Question not found');
@@ -206,10 +226,20 @@ export class DuelsService {
       const prizeCoins = winnerId ? coinsWinner : coinsDraw;
 
       // Atomic status guard — WHERE prevents double-finalization
-      const finishedDuel = await tx.duel.update({
-        where: { id: duel.id, status: { not: 'finished' } },
-        data: { status: 'finished', finishedAt: new Date(), winnerId, prizeCoins },
-      });
+      let finishedDuel;
+      try {
+        finishedDuel = await tx.duel.update({
+          where: { id: duel.id, status: { not: 'finished' } },
+          data: { status: 'finished', finishedAt: new Date(), winnerId, prizeCoins },
+        });
+      } catch (err: any) {
+        if (err.code === 'P2025') {
+          // Already finalized by another thread
+          const reFetched = await tx.duel.findUnique({ where: { id: duelId } });
+          return this.getDuelResult(reFetched);
+        }
+        throw err;
+      }
 
       // Rewards
       if (winnerId && duel.opponentId) {
@@ -282,9 +312,16 @@ export class DuelsService {
     if (duel.initiatorId !== userId) throw new ForbiddenException('Only initiator can cancel');
     if (duel.status !== 'pending') throw new BadRequestException('Cannot cancel active/finished duel');
 
-    return this.prisma.duel.update({
-      where: { id: duelId },
-      data: { status: 'cancelled' },
+    return this.prisma.$transaction(async (tx) => {
+      // Refund initiator
+      if (duel.entryFeeCoins > 0) {
+        await this.wallet.addCoins(userId, duel.entryFeeCoins, 'duel_refund', { duelId }, tx);
+      }
+
+      return tx.duel.update({
+        where: { id: duelId },
+        data: { status: 'cancelled' },
+      });
     });
   }
 

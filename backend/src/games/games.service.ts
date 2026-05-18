@@ -73,7 +73,17 @@ export class GamesService {
     const question = await this.prisma.question.findUnique({ where: { id: questionId } });
     if (!question) throw new NotFoundException('Question not found');
 
-    const isCorrect = question.correctOption === selectedOption && timeSpentMs <= 10000;
+    // Anti-cheat validation: Ensure client doesn't freeze/pause the UI to search answers
+    const elapsedMs = Date.now() - session.createdAt.getTime();
+    const answeredCount = Object.keys(answers).length;
+    const maxAllowedMs = (answeredCount + 1) * 15000 + 15000; // 15s per question + 15s initial network/load buffer
+    const isTimeout = elapsedMs > maxAllowedMs;
+
+    if (isTimeout) {
+      console.warn(`[Anti-Cheat] User ${userId} exceeded time limit for question ${questionId} in session ${sessionId} (elapsed: ${elapsedMs}ms, max allowed: ${maxAllowedMs}ms)`);
+    }
+
+    const isCorrect = !isTimeout && question.correctOption === selectedOption && timeSpentMs <= 10000;
     let scoreEarned = 0;
 
     if (isCorrect) {

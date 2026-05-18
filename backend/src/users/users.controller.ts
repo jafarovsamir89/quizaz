@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
 import { GetUser } from '../auth/user.decorator';
@@ -8,6 +8,11 @@ import type { User } from '@prisma/client';
 @UseGuards(FirebaseAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Post('daily-bonus')
+  claimDailyBonus(@GetUser() user: User) {
+    return this.usersService.claimDailyBonus(user.id);
+  }
 
   @Get('me')
   getMe(@GetUser() user: User) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../features/auth/authStore';
 import { Button } from '../shared/ui/Button';
-import { User, MapPin, Coins, Zap, LogOut, ChevronRight, Pencil } from 'lucide-react';
+import { User, MapPin, Coins, Zap, LogOut, ChevronRight, Pencil, Gift } from 'lucide-react';
 import { auth } from '../shared/api/firebase';
 import { useNavigate } from 'react-router-dom';
 import { profileApi } from '../shared/api';
@@ -38,7 +38,38 @@ export const ProfilePage: React.FC = () => {
       setIsSaving(false);
     }
   };
+  const [isClaimingBonus, setIsClaimingBonus] = useState(false);
 
+  const handleClaimDailyBonus = async () => {
+    setIsClaimingBonus(true);
+    try {
+      const res = await profileApi.claimDailyBonus();
+      const claimedData = res.data;
+      
+      updateUser({
+        balanceCoins: claimedData.balanceCoins,
+        lastDailyBonusAt: new Date().toISOString()
+      });
+      
+      showToast(`Gündəlik bonus alındı! +${claimedData.bonusCoins} qızıl`, 'success');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Bonus artıq alınıb və ya xəta baş verdi';
+      showToast(msg, 'error');
+    } finally {
+      setIsClaimingBonus(false);
+    }
+  };
+
+  const hasClaimedToday = (() => {
+    if (!user?.lastDailyBonusAt) return false;
+    const lastBonusDate = new Date(user.lastDailyBonusAt);
+    const now = new Date();
+    return (
+      now.getFullYear() === lastBonusDate.getFullYear() &&
+      now.getMonth() === lastBonusDate.getMonth() &&
+      now.getDate() === lastBonusDate.getDate()
+    );
+  })();
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1.5rem', overflow: 'auto' }}>
       {/* Avatar & Name */}
@@ -113,6 +144,50 @@ export const ProfilePage: React.FC = () => {
           <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{user?.level}</div>
           <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Səviyyə</div>
         </div>
+      </div>
+
+      {/* Daily Bonus Card */}
+      <div 
+        className="glass-card animate-pulse-subtle"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '1.25rem', marginBottom: '1.5rem',
+          background: hasClaimedToday 
+            ? 'rgba(255,255,255,0.02)'
+            : 'linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,153,0,0.02) 100%)',
+          borderColor: hasClaimedToday ? 'rgba(255,255,255,0.05)' : 'rgba(255,215,0,0.15)',
+          borderRadius: '16px', borderStyle: 'solid', borderWidth: '1px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12,
+            background: hasClaimedToday ? 'rgba(255,255,255,0.05)' : 'rgba(255,215,0,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: hasClaimedToday ? 'var(--text-muted)' : 'var(--primary-gold)'
+          }}>
+            <Gift size={22} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: '0 0 0.15rem 0' }}>Gündəlik Bonus</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>
+              {hasClaimedToday ? 'Sabah yenidən cəhd edin' : 'Hər gün 50 pulsuz qızıl qazan'}
+            </p>
+          </div>
+        </div>
+        <button
+          className="btn-primary"
+          onClick={handleClaimDailyBonus}
+          disabled={hasClaimedToday || isClaimingBonus}
+          style={{
+            padding: '0.5rem 1rem', fontSize: '0.8rem', minHeight: 'unset', width: 'auto',
+            background: hasClaimedToday ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, var(--primary-gold) 0%, #FF9900 100%)',
+            color: hasClaimedToday ? '#fff' : '#000',
+            border: 'none', cursor: hasClaimedToday ? 'default' : 'pointer'
+          }}
+        >
+          {isClaimingBonus ? '...' : hasClaimedToday ? 'Alındı' : 'Qazan'}
+        </button>
       </div>
 
       {/* Menu Items */}

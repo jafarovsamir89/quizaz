@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { WalletService } from '../wallet/wallet.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private wallet: WalletService,
+  ) {}
 
   async findByFirebaseUid(firebaseUid: string) {
     return this.prisma.user.findUnique({
@@ -53,6 +57,47 @@ export class UsersService {
         // keep coins, xp, etc.
       },
       include: { city: true },
+    });
+  }
+
+  async claimDailyBonus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { lastDailyBonusAt: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const now = new Date();
+    if (user.lastDailyBonusAt) {
+      const lastBonusDate = new Date(user.lastDailyBonusAt);
+      const isToday =
+        now.getUTCFullYear() === lastBonusDate.getUTCFullYear() &&
+        now.getUTCMonth() === lastBonusDate.getUTCMonth() &&
+        now.getUTCDate() === lastBonusDate.getUTCDate();
+
+      if (isToday) {
+        throw new BadRequestException('Daily bonus already claimed today');
+      }
+    }
+
+    const bonusAmount = 50;
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Update user lastDailyBonusAt
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { lastDailyBonusAt: now },
+      });
+
+      // 2. Add coins to wallet
+      await this.wallet.addCoins(userId, bonusAmount, 'daily_bonus', {}, tx);
+
+      return {
+        claimed: true,
+        bonusCoins: bonusAmount,
+        balanceCoins: updatedUser.balanceCoins + bonusAmount,
+      };
     });
   }
 }
