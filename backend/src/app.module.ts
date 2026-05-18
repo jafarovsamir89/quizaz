@@ -14,6 +14,8 @@ import { GamesModule } from './games/games.module';
 import { LeaderboardsModule } from './leaderboards/leaderboards.module';
 import { DuelsModule } from './duels/duels.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { ClansModule } from './clans/clans.module';
+import { HeroesModule } from './heroes/heroes.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     LeaderboardsModule,
     DuelsModule,
     SchedulerModule,
+    ClansModule,
+    HeroesModule,
   ],
   controllers: [AppController],
   providers: [

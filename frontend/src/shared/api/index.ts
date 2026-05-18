@@ -43,3 +43,20 @@ export const duelsApi = {
   finishSide: (duelId: string) => api.post(`/duels/${duelId}/finish`),
   getDuel: (duelId: string) => api.get(`/duels/${duelId}`),
 };
+
+export const clansApi = {
+  create: (data: { name: string; type: string; logoUrl?: string }) => 
+    api.post('/clans/create', data),
+  join: (id: string) => api.post(`/clans/${id}/join`),
+  leave: () => api.post('/clans/leave'),
+  getLeaderboard: (type: string) => api.get(`/clans/leaderboard/${type}`),
+  getDetails: (id: string) => api.get(`/clans/${id}`),
+};
+
+export const heroesApi = {
+  getAll: () => api.get('/heroes/all'),
+  getMy: () => api.get('/heroes/my'),
+  equip: (id: string, equip: boolean) => api.post(`/heroes/${id}/equip`, { equip }),
+  openChest: () => api.post('/heroes/chest'),
+  levelUp: (id: string) => api.post(`/heroes/${id}/levelup`),
+};

@@ -41,19 +41,19 @@ export class WalletService {
     if (amount <= 0) return;
 
     const execute = async (client: any) => {
-      const user = await client.user.findUnique({
-        where: { id: userId },
-        select: { balanceCoins: true },
-      });
-
-      if (!user || user.balanceCoins < amount) {
-        throw new BadRequestException('Insufficient coins');
-      }
-
-      await client.user.update({
-        where: { id: userId },
+      // Use updateMany to ensure we only decrement if balance is >= amount
+      // This is an atomic operation that prevents race conditions
+      const updateResult = await client.user.updateMany({
+        where: { 
+          id: userId,
+          balanceCoins: { gte: amount }
+        },
         data: { balanceCoins: { decrement: amount } },
       });
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException('Insufficient coins');
+      }
 
       return client.walletTransaction.create({
         data: {

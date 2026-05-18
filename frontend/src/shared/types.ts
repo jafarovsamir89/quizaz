@@ -37,6 +37,10 @@ export interface UserProfile {
   balanceCoins: number;
   isAdmin: boolean;
   lastDailyBonusAt?: string;
+  dailyStreak?: number;
+  language?: string;
+  clanId?: string | null;
+  clan?: any;
   createdAt: string;
 }
 

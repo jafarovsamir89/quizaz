@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../features/auth/authStore';
 import { Button } from '../shared/ui/Button';
-import { User, MapPin, Coins, Zap, LogOut, ChevronRight, Pencil, Gift } from 'lucide-react';
+import { User, MapPin, Coins, Zap, LogOut, ChevronRight, Pencil, Gift, Shield, Sparkles } from 'lucide-react';
 import { auth, loginWithGoogle } from '../shared/api/firebase';
 import { useNavigate } from 'react-router-dom';
 import { profileApi } from '../shared/api';
@@ -58,10 +58,13 @@ export const ProfilePage: React.FC = () => {
       
       updateUser({
         balanceCoins: claimedData.balanceCoins,
+        xp: claimedData.xp,
+        level: claimedData.level,
+        dailyStreak: claimedData.streak,
         lastDailyBonusAt: new Date().toISOString()
       });
       
-      showToast(`Gündəlik bonus alındı! +${claimedData.bonusCoins} qızıl`, 'success');
+      showToast(`Gündəlik bonus alındı! +${claimedData.bonusCoins} qızıl, +${claimedData.bonusXp} XP`, 'success');
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Bonus artıq alınıb və ya xəta baş verdi';
       showToast(msg, 'error');
@@ -141,6 +144,35 @@ export const ProfilePage: React.FC = () => {
           <span>{user?.city?.nameAz || 'Şəhər seçilməyib'}</span>
         </div>
 
+        {/* Language selector */}
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: 3, borderRadius: 10, marginTop: '0.75rem', width: 120 }}>
+          {['az', 'ru'].map((lang) => {
+            const isActive = (user?.language || 'az') === lang;
+            return (
+              <button
+                key={lang}
+                onClick={async () => {
+                  try {
+                    await profileApi.updateMe({ language: lang });
+                    updateUser({ language: lang });
+                    showToast(lang === 'az' ? 'Dil seçimi: Azərbaycan' : 'Язык изменен на Русский', 'success');
+                  } catch {
+                    showToast('Seçim yadda saxlanılmadı', 'error');
+                  }
+                }}
+                style={{
+                  flex: 1, padding: '0.3rem', borderRadius: 8, fontSize: '0.75rem', fontWeight: 800,
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.25s',
+                  background: isActive ? 'var(--primary-gold)' : 'transparent',
+                  color: isActive ? '#000' : 'var(--text-muted)'
+                }}
+              >
+                {lang.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+
         {user?.email ? (
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
             {user.email}
@@ -185,50 +217,113 @@ export const ProfilePage: React.FC = () => {
 
       {/* Daily Bonus Card */}
       <div 
-        className="glass-card animate-pulse-subtle"
+        className="glass-card"
         style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          display: 'flex', flexDirection: 'column',
           padding: '1.25rem', marginBottom: '1.5rem',
-          background: hasClaimedToday 
-            ? 'rgba(255,255,255,0.02)'
-            : 'linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,153,0,0.02) 100%)',
-          borderColor: hasClaimedToday ? 'rgba(255,255,255,0.05)' : 'rgba(255,215,0,0.15)',
-          borderRadius: '16px', borderStyle: 'solid', borderWidth: '1px'
+          background: 'linear-gradient(135deg, rgba(255,215,0,0.06) 0%, rgba(255,153,0,0.01) 100%)',
+          borderColor: 'rgba(255,215,0,0.12)',
+          borderRadius: '20px', borderStyle: 'solid', borderWidth: '1px'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 12,
-            background: hasClaimedToday ? 'rgba(255,255,255,0.05)' : 'rgba(255,215,0,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: hasClaimedToday ? 'var(--text-muted)' : 'var(--primary-gold)'
-          }}>
-            <Gift size={22} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: 'rgba(255,215,0,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--primary-gold)'
+            }}>
+              <Gift size={20} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Gündəlik Bonus</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0 0 0' }}>
+                {hasClaimedToday ? `${user?.dailyStreak || 0} günlük seriya alınıb 🔥` : 'Hər gün daxil ol və qazan!'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', margin: '0 0 0.15rem 0' }}>Gündəlik Bonus</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>
-              {hasClaimedToday ? 'Sabah yenidən cəhd edin' : 'Hər gün 50 pulsuz qızıl qazan'}
-            </p>
-          </div>
+          <button
+            className="btn-primary"
+            onClick={handleClaimDailyBonus}
+            disabled={hasClaimedToday || isClaimingBonus}
+            style={{
+              padding: '0.5rem 1rem', fontSize: '0.8rem', minHeight: 'unset', width: 'auto',
+              background: hasClaimedToday ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, var(--primary-gold) 0%, #FF9900 100%)',
+              color: hasClaimedToday ? '#fff' : '#000',
+              border: 'none', cursor: hasClaimedToday ? 'default' : 'pointer'
+            }}
+          >
+            {isClaimingBonus ? '...' : hasClaimedToday ? 'Alındı' : 'Qazan'}
+          </button>
         </div>
-        <button
-          className="btn-primary"
-          onClick={handleClaimDailyBonus}
-          disabled={hasClaimedToday || isClaimingBonus}
-          style={{
-            padding: '0.5rem 1rem', fontSize: '0.8rem', minHeight: 'unset', width: 'auto',
-            background: hasClaimedToday ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, var(--primary-gold) 0%, #FF9900 100%)',
-            color: hasClaimedToday ? '#fff' : '#000',
-            border: 'none', cursor: hasClaimedToday ? 'default' : 'pointer'
-          }}
-        >
-          {isClaimingBonus ? '...' : hasClaimedToday ? 'Alındı' : 'Qazan'}
-        </button>
+
+        {/* 7-day timeline */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.4rem', marginTop: '0.25rem' }}>
+          {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+            const currentStreak = user?.dailyStreak || 0;
+            const isCompleted = hasClaimedToday ? day <= currentStreak : day < currentStreak + 1;
+            const isCurrent = !hasClaimedToday && day === currentStreak + 1;
+            const isSuperDay = day === 7;
+
+            let bgColor = 'rgba(255,255,255,0.02)';
+            let borderColor = 'rgba(255,255,255,0.05)';
+            let textColor = 'var(--text-muted)';
+
+            if (isCompleted) {
+              bgColor = 'rgba(0,230,118,0.12)';
+              borderColor = 'rgba(0,230,118,0.2)';
+              textColor = 'var(--success)';
+            } else if (isCurrent) {
+              bgColor = 'rgba(255,215,0,0.15)';
+              borderColor = 'var(--primary-gold)';
+              textColor = 'var(--primary-gold)';
+            } else if (isSuperDay) {
+              borderColor = 'rgba(255,99,71,0.2)';
+              textColor = '#FF6347';
+            }
+
+            return (
+              <div 
+                key={day} 
+                style={{ 
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                  gap: '0.35rem', background: bgColor, border: `1px solid ${borderColor}`,
+                  borderRadius: 12, padding: '0.5rem 0.2rem', minWidth: 0,
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  transform: isCurrent ? 'scale(1.05)' : 'none',
+                  boxShadow: isCurrent ? '0 0 10px rgba(255,215,0,0.2)' : 'none'
+                }}
+              >
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, opacity: 0.6, color: textColor }}>Gün {day}</span>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: textColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isCompleted ? '✓' : isSuperDay ? '👑' : `+${40 + day * 10}`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Menu Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>
+        <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/heroes')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Sparkles size={18} style={{ color: 'var(--primary-gold)' }} />
+            <span style={{ fontWeight: 500 }}>Qəhrəman Kartları</span>
+          </div>
+          <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
+        </div>
+
+        <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/clans')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Shield size={18} style={{ color: 'var(--secondary-blue)' }} />
+            <span style={{ fontWeight: 500 }}>Klanlar & Fəaliyyət</span>
+          </div>
+          <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
+        </div>
+
         <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/city-selection')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <MapPin size={18} style={{ color: 'var(--text-muted)' }} />

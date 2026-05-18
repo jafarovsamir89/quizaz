@@ -19,6 +19,9 @@ import { DuelWaitingPage } from './pages/DuelWaitingPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SplashScreen } from './pages/SplashScreen';
 import { AdminPage } from './pages/AdminPage';
+import { ClansPage } from './pages/ClansPage';
+import { HeroesPage } from './pages/HeroesPage';
+import { DuelMatchmakingPage } from './pages/DuelMatchmakingPage';
 
 const App: React.FC = () => {
   const { user, isLoading, init } = useAuthStore();
@@ -92,8 +95,18 @@ const App: React.FC = () => {
                 </DuelGuard>
               }
             />
+            <Route
+              path="/duels/matchmaking"
+              element={
+                <DuelGuard>
+                  <DuelMatchmakingPage />
+                </DuelGuard>
+              }
+            />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/city-selection" element={<CitySelectionPage />} />
+            <Route path="/clans" element={<ClansPage />} />
+            <Route path="/heroes" element={<HeroesPage />} />
             {/* Admin panel – only accessible by admins (backend enforces via AdminGuard) */}
             {user?.isAdmin && <Route path="/admin" element={<AdminPage />} />}
             <Route path="*" element={<Navigate to="/" />} />

@@ -128,157 +128,195 @@ export class DuelsService {
     selectedOption: string,
     timeSpentMs: number,
   ) {
-    const duel = await this.prisma.duel.findUnique({ where: { id: duelId } });
-    if (!duel) throw new NotFoundException('Duel not found');
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Acquire row-level lock to prevent concurrent answers or state updates
+      await tx.$queryRaw`SELECT 1 FROM "Duel" WHERE "id" = ${duelId} FOR UPDATE`;
 
-    const isInitiator = duel.initiatorId === userId;
-    const isOpponent = duel.opponentId === userId;
-    if (!isInitiator && !isOpponent) throw new ForbiddenException('Access denied');
+      const duel = await tx.duel.findUnique({ where: { id: duelId } });
+      if (!duel) throw new NotFoundException('Duel not found');
 
-    if (duel.status !== 'active' && duel.status !== 'pending')
-      throw new BadRequestException('Duel is not playable');
+      const isInitiator = duel.initiatorId === userId;
+      const isOpponent = duel.opponentId === userId;
+      if (!isInitiator && !isOpponent) throw new ForbiddenException('Access denied');
 
-    if (new Date() > duel.expiresAt) {
-      await this.prisma.duel.update({ where: { id: duelId }, data: { status: 'expired' } });
-      throw new BadRequestException('Duel expired');
-    }
+      if (duel.status !== 'active' && duel.status !== 'pending')
+        throw new BadRequestException('Duel is not playable');
 
-    const answers: any = isInitiator ? (duel.initiatorAnswers || {}) : (duel.opponentAnswers || {});
-    if (answers[questionId]) throw new BadRequestException('Already answered');
+      if (new Date() > duel.expiresAt) {
+        await tx.duel.update({ where: { id: duelId }, data: { status: 'expired' } });
+        throw new BadRequestException('Duel expired');
+      }
 
-    if (!duel.questionIds.includes(questionId)) {
-      throw new BadRequestException('Question not in this duel');
-    }
+      const answers: any = isInitiator ? (duel.initiatorAnswers || {}) : (duel.opponentAnswers || {});
+      if (answers[questionId]) throw new BadRequestException('Already answered');
 
-    const question = await this.prisma.question.findUnique({ where: { id: questionId } });
-    if (!question) throw new BadRequestException('Question not found');
+      if (!duel.questionIds.includes(questionId)) {
+        throw new BadRequestException('Question not in this duel');
+      }
 
-    const isCorrect = question.correctOption === selectedOption && timeSpentMs <= 10000;
+      const question = await tx.question.findUnique({ where: { id: questionId } });
+      if (!question) throw new BadRequestException('Question not found');
 
-    let scoreEarned = 0;
-    if (isCorrect) {
-      scoreEarned = 100;
-      if (timeSpentMs <= 2000) scoreEarned += 50;
-      else if (timeSpentMs <= 5000) scoreEarned += 30;
-      else if (timeSpentMs <= 8000) scoreEarned += 10;
-    }
+      // Server-side timer validation for Duel
+      let lastQuestionAt = (duel.startedAt || duel.createdAt).getTime();
+      for (const qId of Object.keys(answers)) {
+        const ansObj = answers[qId];
+        if (ansObj && ansObj.submittedAt && ansObj.submittedAt > lastQuestionAt) {
+          lastQuestionAt = ansObj.submittedAt;
+        }
+      }
 
-    answers[questionId] = { choice: selectedOption, time: timeSpentMs, correct: isCorrect, score: scoreEarned };
+      const serverElapsed = Date.now() - lastQuestionAt;
+      // Allow 4.5 seconds buffer for client loading, rendering and networking delay
+      if (timeSpentMs + 4500 < serverElapsed) {
+        console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing in duel ${duelId} (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms)`);
+        throw new BadRequestException('Response time anomaly detected');
+      }
 
-    const updateData: any = {};
-    if (isInitiator) {
-      updateData.initiatorAnswers = answers;
-      updateData.initiatorScore = { increment: scoreEarned };
-    } else {
-      updateData.opponentAnswers = answers;
-      updateData.opponentScore = { increment: scoreEarned };
-    }
+      const isCorrect = question.correctOption === selectedOption && timeSpentMs <= 10000;
 
-    await this.prisma.duel.update({ where: { id: duelId }, data: updateData });
+      let scoreEarned = 0;
+      if (isCorrect) {
+        scoreEarned = 100;
+        if (timeSpentMs <= 2000) scoreEarned += 50;
+        else if (timeSpentMs <= 5000) scoreEarned += 30;
+        else if (timeSpentMs <= 8000) scoreEarned += 10;
+      }
 
-    return {
-      isCorrect,
-      correctOption: question.correctOption,
-      explanation: question.explanationAz,
-      scoreEarned,
-    };
+      answers[questionId] = { 
+        choice: selectedOption, 
+        time: timeSpentMs, 
+        correct: isCorrect, 
+        score: scoreEarned,
+        submittedAt: Date.now() // Record server-side submission timestamp
+      };
+
+      const updateData: any = {};
+      if (isInitiator) {
+        updateData.initiatorAnswers = answers;
+        updateData.initiatorScore = { increment: scoreEarned };
+      } else {
+        updateData.opponentAnswers = answers;
+        updateData.opponentScore = { increment: scoreEarned };
+      }
+
+      await tx.duel.update({ where: { id: duelId }, data: updateData });
+
+      return {
+        isCorrect,
+        correctOption: question.correctOption,
+        explanation: question.explanationAz,
+        scoreEarned,
+      };
+    });
   }
 
   async finishSide(userId: string, duelId: string) {
-    const duel = await this.prisma.duel.findUnique({
-      where: { id: duelId },
-      include: { initiator: true, opponent: true },
-    });
-    if (!duel) throw new NotFoundException('Duel not found');
-
-    const isInitiator = duel.initiatorId === userId;
-    const isOpponent = duel.opponentId === userId;
-    if (!isInitiator && !isOpponent) throw new ForbiddenException('Access denied');
-
-    if (duel.status === 'finished') return this.getDuelResult(duel);
-
-    const initiatorDone = Object.keys(duel.initiatorAnswers || {}).length === duel.questionIds.length;
-    const opponentDone =
-      duel.opponentId && Object.keys(duel.opponentAnswers || {}).length === duel.questionIds.length;
-
-    if (initiatorDone && opponentDone) {
-      return this.finalizeDuel(duel.id);
-    }
-
-    return { status: duel.status, message: 'Waiting for the other player' };
-  }
-
-  private async finalizeDuel(duelId: string) {
     return this.prisma.$transaction(async (tx) => {
-      // Re-fetch inside transaction for consistency
+      // 1. Acquire row lock
+      await tx.$queryRaw`SELECT 1 FROM "Duel" WHERE "id" = ${duelId} FOR UPDATE`;
+
       const duel = await tx.duel.findUnique({
         where: { id: duelId },
         include: { initiator: true, opponent: true },
       });
-
       if (!duel) throw new NotFoundException('Duel not found');
-      // Idempotency: already finished
+
+      const isInitiator = duel.initiatorId === userId;
+      const isOpponent = duel.opponentId === userId;
+      if (!isInitiator && !isOpponent) throw new ForbiddenException('Access denied');
+
       if (duel.status === 'finished') return this.getDuelResult(duel);
 
-      let winnerId: string | null = null;
-      if (duel.initiatorScore > duel.opponentScore) winnerId = duel.initiatorId;
-      else if (duel.opponentScore > duel.initiatorScore) winnerId = duel.opponentId;
+      const initiatorDone = Object.keys(duel.initiatorAnswers || {}).length === duel.questionIds.length;
+      const opponentDone =
+        duel.opponentId && Object.keys(duel.opponentAnswers || {}).length === duel.questionIds.length;
 
-      const coinsWinner = 20;
-      const coinsLoser = 5;
-      const coinsDraw = 10;
-      const prizeCoins = winnerId ? coinsWinner : coinsDraw;
-
-      // Atomic status guard — WHERE prevents double-finalization
-      let finishedDuel;
-      try {
-        finishedDuel = await tx.duel.update({
-          where: { id: duel.id, status: { not: 'finished' } },
-          data: { status: 'finished', finishedAt: new Date(), winnerId, prizeCoins },
-        });
-      } catch (err: any) {
-        if (err.code === 'P2025') {
-          // Already finalized by another thread
-          const reFetched = await tx.duel.findUnique({ where: { id: duelId } });
-          return this.getDuelResult(reFetched);
-        }
-        throw err;
+      if (initiatorDone && opponentDone) {
+        return this.finalizeDuelWithTx(duel.id, tx);
       }
 
-      // Rewards
-      if (winnerId && duel.opponentId) {
-        const loserId = winnerId === duel.initiatorId ? duel.opponentId : duel.initiatorId;
-        await this.wallet.addCoins(winnerId, coinsWinner, 'duel_win', { duelId: duel.id }, tx);
-        await this.wallet.addCoins(loserId, coinsLoser, 'duel_loss', { duelId: duel.id }, tx);
-      } else if (duel.opponentId) {
-        await this.wallet.addCoins(duel.initiatorId, coinsDraw, 'duel_draw', { duelId: duel.id }, tx);
-        await this.wallet.addCoins(duel.opponentId, coinsDraw, 'duel_draw', { duelId: duel.id }, tx);
-      }
-
-      // City Points
-      if (duel.initiator?.cityId) {
-        await tx.cityPointsLog.create({
-          data: {
-            cityId: duel.initiator.cityId,
-            userId: duel.initiatorId,
-            amount: duel.initiatorScore,
-            source: 'duel',
-          },
-        });
-      }
-      if (duel.opponent?.cityId) {
-        await tx.cityPointsLog.create({
-          data: {
-            cityId: duel.opponent.cityId,
-            userId: duel.opponentId!,
-            amount: duel.opponentScore,
-            source: 'duel',
-          },
-        });
-      }
-
-      return this.getDuelResult(finishedDuel);
+      return { status: duel.status, message: 'Waiting for the other player' };
     });
+  }
+
+  private async finalizeDuel(duelId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      return this.finalizeDuelWithTx(duelId, tx);
+    });
+  }
+
+  private async finalizeDuelWithTx(duelId: string, tx: any) {
+    // Acquire lock inside transaction
+    await tx.$queryRaw`SELECT 1 FROM "Duel" WHERE "id" = ${duelId} FOR UPDATE`;
+
+    const duel = await tx.duel.findUnique({
+      where: { id: duelId },
+      include: { initiator: true, opponent: true },
+    });
+
+    if (!duel) throw new NotFoundException('Duel not found');
+    // Idempotency: already finished
+    if (duel.status === 'finished') return this.getDuelResult(duel);
+
+    let winnerId: string | null = null;
+    if (duel.initiatorScore > duel.opponentScore) winnerId = duel.initiatorId;
+    else if (duel.opponentScore > duel.initiatorScore) winnerId = duel.opponentId;
+
+    const coinsWinner = 20;
+    const coinsLoser = 5;
+    const coinsDraw = 10;
+    const prizeCoins = winnerId ? coinsWinner : coinsDraw;
+
+    // Atomic status guard — WHERE prevents double-finalization
+    let finishedDuel;
+    try {
+      finishedDuel = await tx.duel.update({
+        where: { id: duel.id, status: { not: 'finished' } },
+        data: { status: 'finished', finishedAt: new Date(), winnerId, prizeCoins },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2025') {
+        // Already finalized by another thread
+        const reFetched = await tx.duel.findUnique({ where: { id: duelId } });
+        return this.getDuelResult(reFetched);
+      }
+      throw err;
+    }
+
+    // Rewards
+    if (winnerId && duel.opponentId) {
+      const loserId = winnerId === duel.initiatorId ? duel.opponentId : duel.initiatorId;
+      await this.wallet.addCoins(winnerId, coinsWinner, 'duel_win', { duelId: duel.id }, tx);
+      await this.wallet.addCoins(loserId, coinsLoser, 'duel_loss', { duelId: duel.id }, tx);
+    } else if (duel.opponentId) {
+      await this.wallet.addCoins(duel.initiatorId, coinsDraw, 'duel_draw', { duelId: duel.id }, tx);
+      await this.wallet.addCoins(duel.opponentId, coinsDraw, 'duel_draw', { duelId: duel.id }, tx);
+    }
+
+    // City Points
+    if (duel.initiator?.cityId) {
+      await tx.cityPointsLog.create({
+        data: {
+          cityId: duel.initiator.cityId,
+          userId: duel.initiatorId,
+          amount: duel.initiatorScore,
+          source: 'duel',
+        },
+      });
+    }
+    if (duel.opponent?.cityId) {
+      await tx.cityPointsLog.create({
+        data: {
+          cityId: duel.opponent.cityId,
+          userId: duel.opponentId!,
+          amount: duel.opponentScore,
+          source: 'duel',
+        },
+      });
+    }
+
+    return this.getDuelResult(finishedDuel);
   }
 
   private getDuelResult(duel: any) {

@@ -26,6 +26,7 @@ describe('Bilik Arena Smoke Tests (e2e)', () => {
         category: {
           findMany: jest.fn().mockResolvedValue([{ id: 1, nameAz: 'Tarix' }]),
         },
+        $queryRaw: jest.fn().mockResolvedValue([]),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         question: {
           findMany: jest.fn().mockResolvedValue([]),

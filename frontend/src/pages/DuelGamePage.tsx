@@ -9,6 +9,7 @@ export const DuelGamePage: React.FC = () => {
   const { questions, currentStep, submitAnswer, finishDuel, currentDuelId, nextStep } = useDuelStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
   const startTimeRef = useRef(Date.now());
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export const DuelGamePage: React.FC = () => {
     async (option: string | null, finalTime?: number) => {
       if (isAnsweringRef.current || !currentQuestion) return;
       isAnsweringRef.current = true;
+      setIsSubmitting(true);
 
       if (timerRef.current) clearInterval(timerRef.current);
 
@@ -69,6 +71,7 @@ export const DuelGamePage: React.FC = () => {
         const msg = err?.response?.data?.message || 'Cavab göndərilmədi';
         showToast(msg, 'error');
         isAnsweringRef.current = false;
+        setIsSubmitting(false);
       }
     },
     [currentQuestion, submitAnswer, questions.length, handleFinish, showToast],
@@ -81,6 +84,7 @@ export const DuelGamePage: React.FC = () => {
     setTimeLeft(10);
     setFeedback(null);
     setSelected(null);
+    setIsSubmitting(false);
     isAnsweringRef.current = false;
 
     timerRef.current = setInterval(() => {
@@ -142,12 +146,18 @@ export const DuelGamePage: React.FC = () => {
             state = 'selected';
           }
 
+          const isDisabled = isSubmitting || !!feedback;
+
           return (
             <div
               key={key}
-              className={`option-card ${state}`}
-              onClick={() => !isAnsweringRef.current && handleAnswer(key)}
-              style={{ pointerEvents: feedback ? 'none' : 'auto' }}
+              className={`option-card ${state} ${isDisabled ? 'disabled' : ''}`}
+              onClick={() => !isDisabled && handleAnswer(key)}
+              style={{
+                pointerEvents: isDisabled ? 'none' : 'auto',
+                opacity: isDisabled && key !== selected && !feedback ? 0.6 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer'
+              }}
             >
               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-bold text-sm">
                 {key.toUpperCase()}

@@ -33,17 +33,8 @@ export const DuelsPage: React.FC = () => {
     }
   };
 
-  const handleStartDuel = async () => {
-    setLoading(true);
-    try {
-      await findOrCreate();
-      navigate('/duels/game');
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Rəqib tapılmadı';
-      showToast(msg, 'error');
-    } finally {
-      setLoading(false);
-    }
+  const handleStartDuel = () => {
+    navigate('/duels/matchmaking');
   };
 
   const handleContinue = async (duel: Duel) => {

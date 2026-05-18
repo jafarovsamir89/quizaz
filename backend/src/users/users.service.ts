@@ -63,40 +63,62 @@ export class UsersService {
   async claimDailyBonus(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { lastDailyBonusAt: true },
+      select: { lastDailyBonusAt: true, dailyStreak: true, xp: true, balanceCoins: true },
     });
 
     if (!user) throw new NotFoundException('User not found');
 
     const now = new Date();
+    let streak = 1;
+
     if (user.lastDailyBonusAt) {
       const lastBonusDate = new Date(user.lastDailyBonusAt);
-      const isToday =
-        now.getUTCFullYear() === lastBonusDate.getUTCFullYear() &&
-        now.getUTCMonth() === lastBonusDate.getUTCMonth() &&
-        now.getUTCDate() === lastBonusDate.getUTCDate();
+      
+      const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      const lastBonusUtc = Date.UTC(lastBonusDate.getUTCFullYear(), lastBonusDate.getUTCMonth(), lastBonusDate.getUTCDate());
+      
+      const diffDays = Math.floor((todayUtc - lastBonusUtc) / (24 * 60 * 60 * 1000));
 
-      if (isToday) {
+      if (diffDays === 0) {
         throw new BadRequestException('Daily bonus already claimed today');
+      } else if (diffDays === 1) {
+        // Consecutive claim
+        streak = user.dailyStreak >= 7 ? 1 : user.dailyStreak + 1;
+      } else {
+        // Streak broken
+        streak = 1;
       }
     }
 
-    const bonusAmount = 50;
+    const bonusCoins = streak === 7 ? 200 : 50 + (streak - 1) * 10;
+    const bonusXp = streak === 7 ? 100 : 10 + (streak - 1) * 5;
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Update user lastDailyBonusAt
+      const currentXp = user.xp + bonusXp;
+      const newLevel = Math.floor(currentXp / 1000) + 1;
+
+      // 1. Update user fields
       const updatedUser = await tx.user.update({
         where: { id: userId },
-        data: { lastDailyBonusAt: now },
+        data: { 
+          lastDailyBonusAt: now,
+          dailyStreak: streak,
+          xp: currentXp,
+          level: newLevel
+        },
       });
 
       // 2. Add coins to wallet
-      await this.wallet.addCoins(userId, bonusAmount, 'daily_bonus', {}, tx);
+      await this.wallet.addCoins(userId, bonusCoins, `daily_bonus_streak_${streak}`, {}, tx);
 
       return {
         claimed: true,
-        bonusCoins: bonusAmount,
-        balanceCoins: updatedUser.balanceCoins + bonusAmount,
+        streak,
+        bonusCoins,
+        bonusXp,
+        balanceCoins: updatedUser.balanceCoins,
+        xp: updatedUser.xp,
+        level: updatedUser.level,
       };
     });
   }

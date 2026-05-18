@@ -9,6 +9,7 @@ export const SoloGamePage: React.FC = () => {
   const { showToast } = useToast();
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<any | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
   const startTimeRef = useRef(Date.now());
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export const SoloGamePage: React.FC = () => {
   const handleAnswer = useCallback(async (option: string | null, finalTime?: number) => {
     if (isAnsweringRef.current) return;
     isAnsweringRef.current = true;
+    setIsSubmitting(true);
     clearInterval(timerRef.current);
 
     const timeSpent = finalTime || Date.now() - startTimeRef.current;
@@ -57,6 +59,7 @@ export const SoloGamePage: React.FC = () => {
       const msg = err?.response?.data?.message || 'Cavab göndərilmədi';
       showToast(msg, 'error');
       isAnsweringRef.current = false;
+      setIsSubmitting(false);
       // If unauthorized or session expired, go home
       if (err?.response?.status === 401) navigate('/');
     }
@@ -69,6 +72,7 @@ export const SoloGamePage: React.FC = () => {
     setTimeLeft(10);
     setFeedback(null);
     setSelected(null);
+    setIsSubmitting(false);
     isAnsweringRef.current = false;
 
     timerRef.current = setInterval(() => {
@@ -139,12 +143,18 @@ export const SoloGamePage: React.FC = () => {
             state = 'selected';
           }
 
+          const isDisabled = isSubmitting || !!feedback;
+
           return (
             <div
               key={key}
-              className={`option-card ${state}`}
-              onClick={() => !feedback && handleAnswer(key)}
-              style={{ pointerEvents: feedback ? 'none' : 'auto' }}
+              className={`option-card ${state} ${isDisabled ? 'disabled' : ''}`}
+              onClick={() => !isDisabled && handleAnswer(key)}
+              style={{
+                pointerEvents: isDisabled ? 'none' : 'auto',
+                opacity: isDisabled && key !== selected && !feedback ? 0.6 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer'
+              }}
             >
               <div className="option-letter">{key.toUpperCase()}</div>
               <span style={{ fontWeight: 500 }}>{value}</span>
