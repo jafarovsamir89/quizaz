@@ -2,21 +2,23 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../features/auth/authStore';
 import { Trophy, Swords, Zap, MapPin, Coins, ChevronRight } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const HomePage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const { t, lang } = useTranslation();
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1.5rem', paddingBottom: '1rem', overflow: 'auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.25rem' }}>Xoş gəldin 👋</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '0.25rem' }}>{t('home_welcome')}</div>
           <h1 style={{ fontSize: '1.6rem' }}>{user?.nickname || 'Player'}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.3rem' }}>
             <MapPin size={13} />
-            <span>{user?.city?.nameAz || 'Şəhər seçilməyib'}</span>
+            <span>{lang === 'ru' ? (user?.city?.nameEn || user?.city?.nameAz) : (user?.city?.nameAz || t('home_no_city'))}</span>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -53,8 +55,8 @@ export const HomePage: React.FC = () => {
               <Zap size={28} fill="currentColor" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', marginBottom: '0.15rem' }}>Solo Oyun</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>Özünü sına və xal qazan</p>
+              <h2 style={{ fontSize: '1.15rem', marginBottom: '0.15rem' }}>{t('home_solo_title')}</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>{t('home_solo_desc')}</p>
             </div>
           </div>
           <ChevronRight size={20} style={{ color: 'var(--text-muted)' }} />
@@ -80,8 +82,8 @@ export const HomePage: React.FC = () => {
               <Swords size={28} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.15rem', marginBottom: '0.15rem' }}>Duellər</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>Rəqiblə yarış</p>
+              <h2 style={{ fontSize: '1.15rem', marginBottom: '0.15rem' }}>{t('home_duel_title')}</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>{t('home_duel_desc')}</p>
             </div>
           </div>
           <ChevronRight size={20} style={{ color: 'var(--text-muted)' }} />
@@ -92,13 +94,13 @@ export const HomePage: React.FC = () => {
       <div className="glass-card" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <Trophy size={18} style={{ color: 'var(--primary-gold)' }} />
-          <h3 style={{ fontWeight: 700 }}>Reytinq Cədvəli</h3>
+          <h3 style={{ fontWeight: 700 }}>{t('home_leaderboard_title')}</h3>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
-          Şəhər və oyunçu sıralamasını izlə
+          {t('home_leaderboard_desc')}
         </p>
         <button className="btn-secondary" style={{ width: '100%' }} onClick={() => navigate('/leaderboards')}>
-          Reytinqə Bax
+          {t('home_leaderboard_btn')}
         </button>
       </div>
     </div>

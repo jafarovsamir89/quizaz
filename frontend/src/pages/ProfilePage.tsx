@@ -6,11 +6,13 @@ import { auth, loginWithGoogle } from '../shared/api/firebase';
 import { useNavigate } from 'react-router-dom';
 import { profileApi } from '../shared/api';
 import { useToast } from '../shared/ui/Toast';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, lang } = useTranslation();
   const [isEditingNick, setIsEditingNick] = useState(false);
   const [nickValue, setNickValue] = useState(user?.nickname || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -18,10 +20,10 @@ export const ProfilePage: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      showToast('Google hesabı ilə uğurla daxil oldunuz!', 'success');
+      showToast(t('profile_google_login_success'), 'success');
     } catch (err: any) {
       console.error(err);
-      showToast('Giriş alınmadı. Yenidən cəhd edin.', 'error');
+      showToast(t('profile_google_login_fail'), 'error');
     }
   };
 
@@ -33,7 +35,7 @@ export const ProfilePage: React.FC = () => {
   const handleSaveNick = async () => {
     const trimmed = nickValue.trim();
     if (!trimmed || trimmed.length < 2) {
-      showToast('Ən az 2 hərf daxil edin', 'error');
+      showToast(t('profile_edit_name_err'), 'error');
       return;
     }
     setIsSaving(true);
@@ -41,9 +43,9 @@ export const ProfilePage: React.FC = () => {
       await profileApi.updateMe({ nickname: trimmed });
       updateUser({ nickname: trimmed });
       setIsEditingNick(false);
-      showToast('Ləqəb yeniləndi!', 'success');
+      showToast(t('profile_edit_name_success'), 'success');
     } catch {
-      showToast('Yadda saxlamaq mümkün olmadı', 'error');
+      showToast(t('profile_edit_name_fail'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -64,9 +66,10 @@ export const ProfilePage: React.FC = () => {
         lastDailyBonusAt: new Date().toISOString()
       });
       
-      showToast(`Gündəlik bonus alındı! +${claimedData.bonusCoins} qızıl, +${claimedData.bonusXp} XP`, 'success');
+      const parts = t('profile_daily_bonus_claimed');
+      showToast(`${parts} +${claimedData.bonusCoins} qızıl, +${claimedData.bonusXp} XP`, 'success');
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Bonus artıq alınıb və ya xəta baş verdi';
+      const msg = err?.response?.data?.message || t('profile_daily_bonus_fail');
       showToast(msg, 'error');
     } finally {
       setIsClaimingBonus(false);
@@ -83,6 +86,7 @@ export const ProfilePage: React.FC = () => {
       now.getDate() === lastBonusDate.getDate()
     );
   })();
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1.5rem', overflow: 'auto' }}>
       {/* Avatar & Name */}
@@ -141,23 +145,23 @@ export const ProfilePage: React.FC = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           <MapPin size={14} />
-          <span>{user?.city?.nameAz || 'Şəhər seçilməyib'}</span>
+          <span>{lang === 'ru' ? (user?.city?.nameEn || user?.city?.nameAz) : (user?.city?.nameAz || t('home_no_city'))}</span>
         </div>
 
         {/* Language selector */}
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: 3, borderRadius: 10, marginTop: '0.75rem', width: 120 }}>
-          {['az', 'ru'].map((lang) => {
-            const isActive = (user?.language || 'az') === lang;
+          {['az', 'ru'].map((l) => {
+            const isActive = (user?.language || 'az') === l;
             return (
               <button
-                key={lang}
+                key={l}
                 onClick={async () => {
                   try {
-                    await profileApi.updateMe({ language: lang });
-                    updateUser({ language: lang });
-                    showToast(lang === 'az' ? 'Dil seçimi: Azərbaycan' : 'Язык изменен на Русский', 'success');
+                    await profileApi.updateMe({ language: l });
+                    updateUser({ language: l });
+                    showToast(l === 'az' ? 'Dil seçimi: Azərbaycan' : 'Язык изменен на Русский', 'success');
                   } catch {
-                    showToast('Seçim yadda saxlanılmadı', 'error');
+                    showToast(t('profile_lang_fail'), 'error');
                   }
                 }}
                 style={{
@@ -167,17 +171,13 @@ export const ProfilePage: React.FC = () => {
                   color: isActive ? '#000' : 'var(--text-muted)'
                 }}
               >
-                {lang.toUpperCase()}
+                {l.toUpperCase()}
               </button>
             );
           })}
         </div>
 
-        {user?.email ? (
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            {user.email}
-          </div>
-        ) : (
+        {!user?.email && (
           <button
             onClick={handleGoogleLogin}
             style={{
@@ -196,7 +196,7 @@ export const ProfilePage: React.FC = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
             </svg>
-            Google ilə Giriş
+            {t('profile_google_login')}
           </button>
         )}
       </div>
@@ -237,9 +237,9 @@ export const ProfilePage: React.FC = () => {
               <Gift size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Gündəlik Bonus</h3>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>{t('profile_daily_bonus')}</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0 0 0' }}>
-                {hasClaimedToday ? `${user?.dailyStreak || 0} günlük seriya alınıb 🔥` : 'Hər gün daxil ol və qazan!'}
+                {hasClaimedToday ? `${user?.dailyStreak || 0} ${lang === 'ru' ? 'дней серия получена 🔥' : 'günlük seriya alınıb 🔥'}` : (lang === 'ru' ? 'Заходи каждый день и получай призы!' : 'Hər gün daxil ol və qazan!')}
               </p>
             </div>
           </div>
@@ -254,7 +254,7 @@ export const ProfilePage: React.FC = () => {
               border: 'none', cursor: hasClaimedToday ? 'default' : 'pointer'
             }}
           >
-            {isClaimingBonus ? '...' : hasClaimedToday ? 'Alındı' : 'Qazan'}
+            {isClaimingBonus ? '...' : hasClaimedToday ? t('profile_daily_bonus_claimed_btn') : t('profile_daily_bonus_claim')}
           </button>
         </div>
 
@@ -296,7 +296,7 @@ export const ProfilePage: React.FC = () => {
                   boxShadow: isCurrent ? '0 0 10px rgba(255,215,0,0.2)' : 'none'
                 }}
               >
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, opacity: 0.6, color: textColor }}>Gün {day}</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, opacity: 0.6, color: textColor }}>{lang === 'ru' ? `День ${day}` : `Gün ${day}`}</span>
                 <div style={{ fontSize: '0.8rem', fontWeight: 800, color: textColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {isCompleted ? '✓' : isSuperDay ? '👑' : `+${40 + day * 10}`}
                 </div>
@@ -311,7 +311,7 @@ export const ProfilePage: React.FC = () => {
         <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/heroes')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Sparkles size={18} style={{ color: 'var(--primary-gold)' }} />
-            <span style={{ fontWeight: 500 }}>Qəhrəman Kartları</span>
+            <span style={{ fontWeight: 500 }}>{t('nav_heroes')}</span>
           </div>
           <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
         </div>
@@ -319,7 +319,7 @@ export const ProfilePage: React.FC = () => {
         <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/clans')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Shield size={18} style={{ color: 'var(--secondary-blue)' }} />
-            <span style={{ fontWeight: 500 }}>Klanlar & Fəaliyyət</span>
+            <span style={{ fontWeight: 500 }}>{t('nav_clans')}</span>
           </div>
           <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
         </div>
@@ -327,7 +327,7 @@ export const ProfilePage: React.FC = () => {
         <div className="option-card" style={{ justifyContent: 'space-between' }} onClick={() => navigate('/city-selection')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <MapPin size={18} style={{ color: 'var(--text-muted)' }} />
-            <span style={{ fontWeight: 500 }}>Şəhəri Dəyiş</span>
+            <span style={{ fontWeight: 500 }}>{lang === 'ru' ? 'Сменить Город' : 'Şəhəri Dəyiş'}</span>
           </div>
           <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
         </div>
@@ -344,7 +344,7 @@ export const ProfilePage: React.FC = () => {
           }}
         >
           <LogOut size={18} />
-          Çıxış Et
+          {t('profile_logout')}
         </button>
       </div>
     </div>

@@ -99,24 +99,42 @@ export class DuelsService {
   }
 
   private async getDuelWithQuestions(duel: any, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const lang = user?.language || 'az';
+
     const questions = await this.prisma.question.findMany({
       where: { id: { in: duel.questionIds } },
       select: {
         id: true,
         textAz: true,
+        textRu: true,
         options: true,
+        optionsRu: true,
         categoryId: true,
         difficulty: true,
       },
     });
 
-    const sortedQuestions = duel.questionIds.map((id: number) => questions.find((q) => q.id === id));
+    const mappedQuestions = duel.questionIds.map((id: number) => {
+      const q = questions.find((q) => q.id === id);
+      if (!q) return null;
+      return {
+        id: q.id,
+        textAz: lang === 'ru' && q.textRu ? q.textRu : q.textAz,
+        options: lang === 'ru' && q.optionsRu ? q.optionsRu : q.options,
+        categoryId: q.categoryId,
+        difficulty: q.difficulty,
+      };
+    }).filter(Boolean);
 
     return {
       duelId: duel.id,
       status: duel.status,
       role: duel.initiatorId === userId ? 'initiator' : 'opponent',
-      questions: sortedQuestions,
+      questions: mappedQuestions,
       expiresAt: duel.expiresAt,
     };
   }
