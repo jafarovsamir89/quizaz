@@ -57,12 +57,16 @@ export class DuelsService {
       return this.getDuelWithQuestions(updatedDuel, userId);
     }
 
-    // 3. Resume own pending duel if exists
+    // 3. Resume own pending duel if exists (only if initiator has not finished answering)
     const existingPending = await this.prisma.duel.findFirst({
       where: { initiatorId: userId, status: 'pending', expiresAt: { gt: new Date() } },
     });
     if (existingPending) {
-      return this.getDuelWithQuestions(existingPending, userId);
+      const answers: any = existingPending.initiatorAnswers || {};
+      const answeredCount = Object.keys(answers).length;
+      if (answeredCount < existingPending.questionIds.length) {
+        return this.getDuelWithQuestions(existingPending, userId);
+      }
     }
 
     // 4. Create new pending duel
