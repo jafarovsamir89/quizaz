@@ -12,6 +12,7 @@ interface GameState {
   startSolo: (params: { categoryId?: number; difficulty?: number; limit?: number }) => Promise<void>;
   submitAnswer: (data: { questionId: number; selectedOption: string; timeSpentMs: number }) => Promise<AnswerFeedback>;
   finishSolo: () => Promise<GameSession | null>;
+  nextStep: () => void;
   reset: () => void;
 }
 
@@ -41,7 +42,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { sessionId } = get();
     if (!sessionId) return {} as AnswerFeedback;
     const res = await gameApi.submitAnswer(sessionId, data);
-    set((state) => ({ currentStep: state.currentStep + 1 }));
     return res.data as AnswerFeedback;
   },
 
@@ -57,6 +57,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ isLoading: false });
     }
   },
+
+  nextStep: () => set((state) => ({ currentStep: state.currentStep + 1 })),
 
   reset: () => set({ sessionId: null, questions: [], currentStep: 0, results: null }),
 }));

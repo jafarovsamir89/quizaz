@@ -6,7 +6,7 @@ import { Timer, Swords } from 'lucide-react';
 import type { AnswerFeedback } from '../shared/types';
 
 export const DuelGamePage: React.FC = () => {
-  const { questions, currentStep, submitAnswer, finishDuel, currentDuelId } = useDuelStore();
+  const { questions, currentStep, submitAnswer, finishDuel, currentDuelId, nextStep } = useDuelStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
   const [timeLeft, setTimeLeft] = useState(10);
@@ -58,11 +58,11 @@ export const DuelGamePage: React.FC = () => {
         setFeedback(res);
 
         setTimeout(() => {
-          const nextStep = useDuelStore.getState().currentStep;
-          if (nextStep >= questions.length) {
+          const nextS = currentStep + 1;
+          if (nextS >= questions.length) {
             handleFinish();
           } else {
-            isAnsweringRef.current = false;
+            nextStep();
           }
         }, 1500);
       } catch (err: any) {

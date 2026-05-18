@@ -13,6 +13,7 @@ interface DuelState {
   findOrCreate: () => Promise<any>;
   submitAnswer: (data: { questionId: number; selectedOption: string; timeSpentMs: number }) => Promise<AnswerFeedback>;
   finishDuel: () => Promise<DuelResult | null>;
+  nextStep: () => void;
   setDuel: (duel: Duel, questions: Question[], role: 'initiator' | 'opponent') => void;
   /** Set duel state from a full Duel API object (for resuming from list) */
   setDuelFromApi: (duel: Duel, role: 'initiator' | 'opponent') => void;
@@ -49,7 +50,6 @@ export const useDuelStore = create<DuelState>((set, get) => ({
     const { currentDuelId } = get();
     if (!currentDuelId) return {} as AnswerFeedback;
     const res = await duelsApi.submitAnswer(currentDuelId, data);
-    set((state) => ({ currentStep: state.currentStep + 1 }));
     return res.data as AnswerFeedback;
   },
 
@@ -65,6 +65,8 @@ export const useDuelStore = create<DuelState>((set, get) => ({
       set({ isLoading: false });
     }
   },
+
+  nextStep: () => set((state) => ({ currentStep: state.currentStep + 1 })),
 
   setDuel: (duel, questions, role) =>
     set({

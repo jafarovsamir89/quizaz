@@ -5,7 +5,7 @@ import { useToast } from '../shared/ui/Toast';
 import { Timer, Zap } from 'lucide-react';
 
 export const SoloGamePage: React.FC = () => {
-  const { questions, currentStep, submitAnswer, finishSolo } = useGameStore();
+  const { questions, currentStep, submitAnswer, finishSolo, nextStep } = useGameStore();
   const { showToast } = useToast();
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<any | null>(null);
@@ -45,12 +45,11 @@ export const SoloGamePage: React.FC = () => {
       setFeedback(res);
 
       setTimeout(() => {
-        const nextStep = useGameStore.getState().currentStep;
-        if (nextStep >= questions.length) {
+        const nextS = currentStep + 1;
+        if (nextS >= questions.length) {
           handleFinish();
         } else {
-          // Important: state reset is also handled by useEffect on currentStep change
-          isAnsweringRef.current = false;
+          nextStep();
         }
       }, 1500);
     } catch (err: any) {
