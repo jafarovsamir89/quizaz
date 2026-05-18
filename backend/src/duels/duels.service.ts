@@ -188,12 +188,13 @@ export class DuelsService {
       // Allow a generous 15-second buffer for the first question to account for lobby transitions and page load.
       // Subsequent questions get a robust 7.5-second buffer.
       const buffer = isFirstQuestion ? 15000 : 7500;
+      let timeAnomaly = false;
       if (timeSpentMs + buffer < serverElapsed) {
         console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing in duel ${duelId} (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms, buffer: ${buffer}ms)`);
-        throw new BadRequestException('Response time anomaly detected');
+        timeAnomaly = true;
       }
 
-      const isCorrect = question.correctOption === selectedOption && timeSpentMs <= 10000;
+      const isCorrect = !timeAnomaly && question.correctOption === selectedOption && timeSpentMs <= 10000;
 
       let scoreEarned = 0;
       if (isCorrect) {
