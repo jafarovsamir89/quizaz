@@ -64,6 +64,7 @@ model Question {
   optionsRu     Json?    // { a: string, b: string, c: string, d: string }
   correctOption String   // "a", "b", "c", or "d"
   difficulty    Int      @default(1)
+  language      String   @default("az") // "az" or "ru"
   explanationAz String?
   explanationRu String?
   status        String   @default("active") // active, flagged, draft, deleted

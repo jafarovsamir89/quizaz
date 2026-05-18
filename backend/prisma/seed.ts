@@ -78,7 +78,80 @@ async function main() {
     }
   }
 
-  console.log(`Seed completed. Imported ${questionsData.length} questions.`);
+  // Seed Russian questions pool
+  const ruQuestions = [
+    {
+      categoryName: 'Azərbaycan Tarixi',
+      textAz: 'Кто был основателем государства Сефевидов?',
+      options: { a: 'Шах Исмаил Хатаи', b: 'Шах Аббас I', c: 'Шах Тахмасиб', d: 'Надир-шах' },
+      correctOption: 'a',
+      difficulty: 1,
+      language: 'ru',
+      explanationAz: 'Шах Исмаил Хатаи основал государство Сефевидов в 1501 году.',
+    },
+    {
+      categoryName: 'Azərbaycan Coğrafiyası',
+      textAz: 'Какая самая высокая горная вершина Азербайджана?',
+      options: { a: 'Шахдаг', b: 'Базардюзю', c: 'Муровдаг', d: 'Капыджик' },
+      correctOption: 'b',
+      difficulty: 1,
+      language: 'ru',
+      explanationAz: 'Вершина Базардюзю является самой высокой точкой Азербайджана (4466 метров).',
+    },
+    {
+      categoryName: 'Azərbaycan Mədəniyyəti',
+      textAz: 'Кто написал знаменитую оперу "Лейли и Меджнун"?',
+      options: { a: 'Кара Караев', b: 'Фикрет Амиров', c: 'Узеир Гаджибейли', d: 'Ниязи' },
+      correctOption: 'c',
+      difficulty: 1,
+      language: 'ru',
+      explanationAz: 'Первая на Востоке опера "Лейли и Меджнун" была написана Узеиром Гаджибейли в 1907 году.',
+    },
+    {
+      categoryName: 'Qarabağ',
+      textAz: 'Какое растение является символом города Шуша и всего Карабаха?',
+      options: { a: 'Хары-бюльбюль', b: 'Альпийская роза', c: 'Горный тюльпан', d: 'Карабахская гвоздика' },
+      correctOption: 'a',
+      difficulty: 1,
+      language: 'ru',
+      explanationAz: 'Эндемичный цветок Хары-бюльбюль является символом города Шуша.',
+    },
+    {
+      categoryName: 'Azərbaycan Coğrafiyası',
+      textAz: 'Какое живописное озеро называют "жемчужиной Азербайджана"?',
+      options: { a: 'Маралгёль', b: 'Гёйгёль', c: 'Ноургёль', d: 'Батабат' },
+      correctOption: 'b',
+      difficulty: 1,
+      language: 'ru',
+      explanationAz: 'Озеро Гёйгёль образовалось в результате землетрясения 1139 года и признано жемчужиной природы.',
+    },
+  ];
+
+  for (const q of ruQuestions) {
+    const category = await prisma.category.findFirst({
+      where: { nameAz: q.categoryName },
+    });
+
+    if (category) {
+      const existingQ = await prisma.question.findFirst({ where: { textAz: q.textAz } });
+      if (!existingQ) {
+        await prisma.question.create({
+          data: {
+            textAz: q.textAz,
+            options: q.options,
+            correctOption: q.correctOption,
+            difficulty: q.difficulty,
+            explanationAz: q.explanationAz || null,
+            categoryId: category.id,
+            language: q.language,
+            status: 'active',
+          },
+        });
+      }
+    }
+  }
+
+  console.log(`Seed completed. Imported ${questionsData.length} AZ questions and ${ruQuestions.length} RU questions.`);
 }
 
 main()

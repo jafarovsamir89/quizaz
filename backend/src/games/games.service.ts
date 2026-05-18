@@ -12,15 +12,23 @@ export class GamesService {
 
   async startSolo(userId: string, categoryId?: number, difficulty?: number, limit = 10) {
     if (limit > 20) limit = 20;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const lang = user?.language || 'az';
 
-    const conditions: Prisma.Sql[] = [Prisma.sql`"status" = 'active'`];
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`"status" = 'active'`,
+      Prisma.sql`"language" = ${lang}`
+    ];
     if (categoryId) conditions.push(Prisma.sql`"categoryId" = ${categoryId}`);
     if (difficulty) conditions.push(Prisma.sql`"difficulty" = ${difficulty}`);
 
     const whereClause = Prisma.join(conditions, ' AND ');
 
     const questions: any[] = await this.prisma.$queryRaw`
-      SELECT id, "textAz", "textRu", options, "optionsRu", "categoryId", difficulty FROM "Question"
+      SELECT id, "textAz", options, "categoryId", difficulty FROM "Question"
       WHERE ${whereClause}
       ORDER BY RANDOM()
       LIMIT ${limit}
@@ -29,12 +37,6 @@ export class GamesService {
     if (questions.length === 0) {
       throw new BadRequestException('No questions found for the given criteria');
     }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { language: true },
-    });
-    const lang = user?.language || 'az';
 
     const session = await this.prisma.gameSession.create({
       data: {
@@ -50,12 +52,10 @@ export class GamesService {
     return {
       sessionId: session.id,
       questions: questions.map((q) => {
-        const text = lang === 'ru' && q.textRu ? q.textRu : q.textAz;
-        const options = lang === 'ru' && q.optionsRu ? q.optionsRu : q.options;
         return {
           id: q.id,
-          textAz: text,
-          options,
+          textAz: q.textAz,
+          options: q.options,
           categoryId: q.categoryId,
           difficulty: q.difficulty,
         };

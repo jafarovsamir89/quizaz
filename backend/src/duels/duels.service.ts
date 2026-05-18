@@ -70,8 +70,14 @@ export class DuelsService {
     }
 
     // 4. Create new pending duel
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const lang = user?.language || 'az';
+
     const questions: any[] = await this.prisma.$queryRawUnsafe(`
-      SELECT id FROM "Question" WHERE status = 'active' ORDER BY RANDOM() LIMIT 7
+      SELECT id FROM "Question" WHERE status = 'active' AND language = '${lang}' ORDER BY RANDOM() LIMIT 7
     `);
 
     if (questions.length < 7) throw new BadRequestException('Not enough questions for a duel');
@@ -99,20 +105,12 @@ export class DuelsService {
   }
 
   private async getDuelWithQuestions(duel: any, userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { language: true },
-    });
-    const lang = user?.language || 'az';
-
     const questions = await this.prisma.question.findMany({
       where: { id: { in: duel.questionIds } },
       select: {
         id: true,
         textAz: true,
-        textRu: true,
         options: true,
-        optionsRu: true,
         categoryId: true,
         difficulty: true,
       },
@@ -123,8 +121,8 @@ export class DuelsService {
       if (!q) return null;
       return {
         id: q.id,
-        textAz: lang === 'ru' && q.textRu ? q.textRu : q.textAz,
-        options: lang === 'ru' && q.optionsRu ? q.optionsRu : q.options,
+        textAz: q.textAz,
+        options: q.options,
         categoryId: q.categoryId,
         difficulty: q.difficulty,
       };
