@@ -12,10 +12,30 @@ export class FirebaseService implements OnModuleInit {
           const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
           console.log(`[Diagnostic] FIREBASE_SERVICE_ACCOUNT starts with: "${rawJson.substring(0, 10)}..." (length: ${rawJson.length})`);
           
-          const jsonMatch = rawJson.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('No JSON object (braces) found in FIREBASE_SERVICE_ACCOUNT string');
+          let serviceAccount;
+          if (rawJson.startsWith('{') || rawJson.startsWith('"')) {
+            // Clean up wrapping quotes if Railway added them
+            let cleanJson = rawJson;
+            if (cleanJson.startsWith('"') && cleanJson.endsWith('"')) {
+              cleanJson = cleanJson.substring(1, cleanJson.length - 1);
+            }
+            // Remove backslash escapes if Railway escaped them
+            cleanJson = cleanJson.replace(/\\"/g, '"').replace(/\\n/g, '\n');
+            
+            const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('No JSON object (braces) found in FIREBASE_SERVICE_ACCOUNT string');
+            serviceAccount = JSON.parse(jsonMatch[0]);
+          } else {
+            // Try decoding from base64 (which has no braces or quotes, completely bulletproof)
+            try {
+              const decoded = Buffer.from(rawJson, 'base64').toString('utf8');
+              serviceAccount = JSON.parse(decoded);
+              console.log('✅ Decoded Firebase service account from Base64 successfully');
+            } catch (err: any) {
+              throw new Error(`Failed to parse as JSON and failed to decode as Base64: ${err.message}`);
+            }
+          }
           
-          const serviceAccount = JSON.parse(jsonMatch[0]);
           credential = admin.credential.cert(serviceAccount);
         } else {
           // Priority 2: Individual variables
