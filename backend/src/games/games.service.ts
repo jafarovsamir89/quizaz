@@ -92,17 +92,21 @@ export class GamesService {
 
       // Anti-cheat: Validate that the client didn't pause/freeze their timer
       let lastQuestionAt = session.createdAt.getTime();
+      let isFirstQuestion = true;
       for (const qId of Object.keys(answers)) {
         const ansObj = answers[qId];
         if (ansObj && ansObj.submittedAt && ansObj.submittedAt > lastQuestionAt) {
           lastQuestionAt = ansObj.submittedAt;
+          isFirstQuestion = false;
         }
       }
 
       const serverElapsed = Date.now() - lastQuestionAt;
-      // Allow 4.5 seconds buffer for client-side loading, animations, transition, and network delay
-      if (timeSpentMs + 4500 < serverElapsed) {
-        console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms)`);
+      // Allow a generous 15-second buffer for the first question to account for initialization, page transitions, and network transit time.
+      // Subsequent questions get a robust 7.5-second buffer to accommodate typical networking fluctuations.
+      const buffer = isFirstQuestion ? 15000 : 7500;
+      if (timeSpentMs + buffer < serverElapsed) {
+        console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms, buffer: ${buffer}ms)`);
         throw new BadRequestException('Response time anomaly detected');
       }
 

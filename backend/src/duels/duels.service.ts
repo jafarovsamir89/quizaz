@@ -175,17 +175,21 @@ export class DuelsService {
 
       // Server-side timer validation for Duel
       let lastQuestionAt = (duel.startedAt || duel.createdAt).getTime();
+      let isFirstQuestion = true;
       for (const qId of Object.keys(answers)) {
         const ansObj = answers[qId];
         if (ansObj && ansObj.submittedAt && ansObj.submittedAt > lastQuestionAt) {
           lastQuestionAt = ansObj.submittedAt;
+          isFirstQuestion = false;
         }
       }
 
       const serverElapsed = Date.now() - lastQuestionAt;
-      // Allow 4.5 seconds buffer for client loading, rendering and networking delay
-      if (timeSpentMs + 4500 < serverElapsed) {
-        console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing in duel ${duelId} (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms)`);
+      // Allow a generous 15-second buffer for the first question to account for lobby transitions and page load.
+      // Subsequent questions get a robust 7.5-second buffer.
+      const buffer = isFirstQuestion ? 15000 : 7500;
+      if (timeSpentMs + buffer < serverElapsed) {
+        console.warn(`[Anti-Cheat] User ${userId} flagged for response time spoofing in duel ${duelId} (client: ${timeSpentMs}ms, server elapsed: ${serverElapsed}ms, buffer: ${buffer}ms)`);
         throw new BadRequestException('Response time anomaly detected');
       }
 
