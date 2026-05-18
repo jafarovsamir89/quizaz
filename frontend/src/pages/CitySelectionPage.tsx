@@ -3,12 +3,14 @@ import { metadataApi, profileApi } from '../shared/api';
 import { Button } from '../shared/ui/Button';
 import { useAuthStore } from '../features/auth/authStore';
 import { MapPin } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const CitySelectionPage: React.FC = () => {
   const [cities, setCities] = useState<any[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const { updateUser } = useAuthStore();
+  const { lang } = useTranslation();
 
   useEffect(() => {
     metadataApi.getCities().then(res => setCities(res.data));
@@ -33,10 +35,10 @@ export const CitySelectionPage: React.FC = () => {
       <div style={{ paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
           <MapPin size={20} style={{ color: 'var(--primary-gold)' }} />
-          <h1>Xoş gəlmisiniz!</h1>
+          <h1>{lang === 'ru' ? 'Добро пожаловать!' : 'Xoş gəlmisiniz!'}</h1>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-          Şəhərini seç və Bilik Arenasına daxil ol. Qazandığın hər xal şəhərini zirvəyə daşıyacaq!
+          {lang === 'ru' ? 'Выберите свой город и войдите на Арену Знаний. Каждое заработанное очко продвинет ваш город к вершине!' : 'Şəhərini seç və Bilik Arenasına daxil ol. Qazandığın hər xal şəhərini zirvəyə daşıyacaq!'}
         </p>
       </div>
 
@@ -47,14 +49,14 @@ export const CitySelectionPage: React.FC = () => {
             className={`option-card ${selected === city.id ? 'selected' : ''}`}
             onClick={() => setSelected(city.id)}
           >
-            <span style={{ fontWeight: 600, fontSize: '1rem' }}>{city.nameAz}</span>
+            <span style={{ fontWeight: 600, fontSize: '1rem' }}>{lang === 'ru' ? city.nameEn : city.nameAz}</span>
           </div>
         ))}
       </div>
 
       <div style={{ paddingBottom: '1.5rem' }}>
         <Button onClick={handleConfirm} isLoading={loading} disabled={!selected} style={{ width: '100%', height: 56 }}>
-          Arenaya Daxil Ol
+          {lang === 'ru' ? 'Войти на Арену' : 'Arenaya Daxil Ol'}
         </Button>
       </div>
     </div>

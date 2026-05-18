@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../features/solo/gameStore';
 import { useToast } from '../shared/ui/Toast';
 import { Timer, Zap } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const SoloGamePage: React.FC = () => {
   const { questions, currentStep, submitAnswer, finishSolo, nextStep } = useGameStore();
@@ -15,6 +16,7 @@ export const SoloGamePage: React.FC = () => {
   const navigate = useNavigate();
   const timerRef = useRef<any>(null);
   const isAnsweringRef = useRef(false);
+  const { t, lang } = useTranslation();
 
   const currentQuestion = questions[currentStep];
 
@@ -23,11 +25,11 @@ export const SoloGamePage: React.FC = () => {
       await finishSolo();
       navigate('/solo/result');
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Oyun tamamlanmadı';
+      const msg = err?.response?.data?.message || t('error_occurred');
       showToast(msg, 'error');
       navigate('/');
     }
-  }, [finishSolo, navigate, showToast]);
+  }, [finishSolo, navigate, showToast, t]);
 
   const handleAnswer = useCallback(async (option: string | null, finalTime?: number) => {
     if (isAnsweringRef.current) return;
@@ -56,14 +58,14 @@ export const SoloGamePage: React.FC = () => {
       }, 1500);
     } catch (err: any) {
       console.error('Answer submission failed:', err);
-      const msg = err?.response?.data?.message || 'Cavab göndərilmədi';
+      const msg = err?.response?.data?.message || t('error_occurred');
       showToast(msg, 'error');
       isAnsweringRef.current = false;
       setIsSubmitting(false);
       // If unauthorized or session expired, go home
       if (err?.response?.status === 401) navigate('/');
     }
-  }, [currentQuestion, submitAnswer, questions.length, handleFinish]);
+  }, [currentQuestion, submitAnswer, questions.length, handleFinish, t, navigate, showToast]);
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -87,7 +89,7 @@ export const SoloGamePage: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [currentStep]);
+  }, [currentStep, currentQuestion, handleAnswer]);
 
   if (!currentQuestion) return null;
 
@@ -100,7 +102,7 @@ export const SoloGamePage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Zap size={16} style={{ color: 'var(--primary-gold)' }} />
           <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.9rem' }}>
-            Sual <span style={{ color: '#fff' }}>{currentStep + 1}</span> / {questions.length}
+            {lang === 'ru' ? 'Вопрос ' : 'Sual '}<span style={{ color: '#fff' }}>{currentStep + 1}</span> / {questions.length}
           </span>
         </div>
         <div style={{
@@ -171,7 +173,7 @@ export const SoloGamePage: React.FC = () => {
             ? { background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.15)', color: 'var(--success)' }
             : { background: 'rgba(255,68,119,0.08)', border: '1px solid rgba(255,68,119,0.15)', color: 'var(--error)' })
         }}>
-          {feedback.isCorrect ? `Düzdür! +${feedback.scoreEarned} xal` : 'Səhvdir!'}
+          {feedback.isCorrect ? (lang === 'ru' ? `Правильно! +${feedback.scoreEarned} очков` : `Düzdür! +${feedback.scoreEarned} xal`) : (lang === 'ru' ? 'Неправильно!' : 'Səhvdir!')}
         </div>
       )}
     </div>

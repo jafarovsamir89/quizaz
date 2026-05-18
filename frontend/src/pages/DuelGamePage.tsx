@@ -4,6 +4,7 @@ import { useDuelStore } from '../features/duels/duelStore';
 import { useToast } from '../shared/ui/Toast';
 import { Timer, Swords } from 'lucide-react';
 import type { AnswerFeedback } from '../shared/types';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const DuelGamePage: React.FC = () => {
   const { questions, currentStep, submitAnswer, finishDuel, currentDuelId, nextStep } = useDuelStore();
@@ -17,6 +18,7 @@ export const DuelGamePage: React.FC = () => {
   // Prevents double-submit on rapid clicks or timer + click race
   const isAnsweringRef = useRef(false);
   const { showToast } = useToast();
+  const { t, lang } = useTranslation();
 
   const currentQuestion = questions[currentStep];
 
@@ -35,10 +37,10 @@ export const DuelGamePage: React.FC = () => {
         navigate('/duels/waiting');
       }
     } catch {
-      showToast('Xəta baş verdi. Yenidən cəhd edin.', 'error');
+      showToast(t('error_occurred'), 'error');
       navigate('/duels/waiting');
     }
-  }, [finishDuel, navigate, showToast]);
+  }, [finishDuel, navigate, showToast, t]);
 
   const handleAnswer = useCallback(
     async (option: string | null, finalTime?: number) => {
@@ -68,13 +70,13 @@ export const DuelGamePage: React.FC = () => {
           }
         }, 1500);
       } catch (err: any) {
-        const msg = err?.response?.data?.message || 'Cavab göndərilmədi';
+        const msg = err?.response?.data?.message || t('error_occurred');
         showToast(msg, 'error');
         isAnsweringRef.current = false;
         setIsSubmitting(false);
       }
     },
-    [currentQuestion, submitAnswer, questions.length, handleFinish, showToast],
+    [currentQuestion, submitAnswer, questions.length, handleFinish, showToast, t],
   );
 
   useEffect(() => {
@@ -131,7 +133,7 @@ export const DuelGamePage: React.FC = () => {
 
       <div className="glass-card mb-8 border-secondary-blue/10">
         <div className="text-xs text-secondary-blue uppercase tracking-widest text-center mb-2 font-bold opacity-70">
-          Sual {currentStep + 1} / {questions.length}
+          {lang === 'ru' ? 'Вопрос ' : 'Sual '}{currentStep + 1} / {questions.length}
         </div>
         <h2 className="text-xl font-bold leading-relaxed text-center">{currentQuestion.textAz}</h2>
       </div>
@@ -174,7 +176,7 @@ export const DuelGamePage: React.FC = () => {
             feedback.isCorrect ? 'text-success' : 'text-error'
           }`}
         >
-          {feedback.isCorrect ? `Düzdür! +${feedback.scoreEarned} xal` : 'Səhvdir!'}
+          {feedback.isCorrect ? (lang === 'ru' ? `Правильно! +${feedback.scoreEarned} очков` : `Düzdür! +${feedback.scoreEarned} xal`) : (lang === 'ru' ? 'Неправильно!' : 'Səhvdir!')}
         </div>
       )}
     </div>

@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { leaderboardsApi } from '../shared/api';
 import { Trophy, Users, MapPin } from 'lucide-react';
 import { EmptyState } from '../shared/ui/EmptyState';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 const PERIODS = [
-  { key: 'daily', label: 'Bu gün' },
-  { key: 'weekly', label: 'Bu həftə' },
-  { key: 'monthly', label: 'Bu ay' },
-  { key: 'all', label: 'Həmişə' },
+  { key: 'daily', labelAz: 'Bu gün', labelRu: 'Сегодня' },
+  { key: 'weekly', labelAz: 'Bu həftə', labelRu: 'На этой неделе' },
+  { key: 'monthly', labelAz: 'Bu ay', labelRu: 'В этом месяце' },
+  { key: 'all', labelAz: 'Həmişə', labelRu: 'Все время' },
 ];
 
 export const LeaderboardsPage: React.FC = () => {
@@ -15,6 +16,7 @@ export const LeaderboardsPage: React.FC = () => {
   const [period, setPeriod] = useState('weekly');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const { t, lang } = useTranslation();
 
   useEffect(() => {
     setLoading(true);
@@ -31,22 +33,22 @@ export const LeaderboardsPage: React.FC = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1.5rem', overflow: 'hidden' }}>
-      <h1 style={{ marginBottom: '1.25rem' }}>Reytinq</h1>
+      <h1 style={{ marginBottom: '1.25rem' }}>{t('nav_leaderboard')}</h1>
 
       {/* Tabs */}
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: 3, borderRadius: 16, marginBottom: '1rem', flexShrink: 0 }}>
-        {['cities', 'players'].map(t => (
+        {['cities', 'players'].map(tKey => (
           <button
-            key={t}
-            onClick={() => setTab(t as any)}
+            key={tKey}
+            onClick={() => setTab(tKey as any)}
             style={{
               flex: 1, padding: '0.7rem', borderRadius: 13, fontWeight: 700, fontSize: '0.9rem',
               border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.3s',
-              background: tab === t ? 'rgba(255,255,255,0.08)' : 'transparent',
-              color: tab === t ? 'var(--primary-gold)' : 'var(--text-muted)'
+              background: tab === tKey ? 'rgba(255,255,255,0.08)' : 'transparent',
+              color: tab === tKey ? 'var(--primary-gold)' : 'var(--text-muted)'
             }}
           >
-            {t === 'cities' ? 'Şəhərlər' : 'Oyunçular'}
+            {tKey === 'cities' ? (lang === 'ru' ? 'Города' : 'Şəhərlər') : (lang === 'ru' ? 'Игроки' : 'Oyunçular')}
           </button>
         ))}
       </div>
@@ -66,7 +68,7 @@ export const LeaderboardsPage: React.FC = () => {
               borderColor: period === p.key ? 'var(--primary-gold)' : 'var(--glass-border)'
             }}
           >
-            {p.label}
+            {lang === 'ru' ? p.labelRu : p.labelAz}
           </button>
         ))}
       </div>
@@ -76,7 +78,7 @@ export const LeaderboardsPage: React.FC = () => {
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', gap: '1rem' }}>
             <div style={{ width: 32, height: 32, border: '2px solid var(--primary-gold)', borderTopColor: 'transparent', borderRadius: '50%' }} className="animate-spin" />
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Yüklənir...</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('loading')}</span>
           </div>
         ) : data?.items?.length > 0 ? (
           data.items.map((item: any) => (
@@ -94,7 +96,7 @@ export const LeaderboardsPage: React.FC = () => {
                   <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{item.cityName || item.nickname}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     {tab === 'cities' ? (
-                      <><Users size={10} /> {item.playersCount} oyunçu</>
+                      <><Users size={10} /> {item.playersCount} {lang === 'ru' ? 'игроков' : 'oyunçu'}</>
                     ) : (
                       <><MapPin size={10} /> {item.cityName}</>
                     )}
@@ -103,15 +105,15 @@ export const LeaderboardsPage: React.FC = () => {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontWeight: 700, color: 'var(--primary-gold)' }}>{item.totalPoints?.toLocaleString()}</div>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Xal</div>
+                <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{lang === 'ru' ? 'Очков' : 'Xal'}</div>
               </div>
             </div>
           ))
         ) : (
           <EmptyState
             icon={<Trophy size={44} />}
-            title="Məlumat tapılmadı"
-            description="Bu dövr üçün hələ ki heç bir nəticə yoxdur."
+            title={t('empty_state_title')}
+            description={lang === 'ru' ? 'За этот период результатов пока нет.' : 'Bu dövr üçün hələ ki heç bir nəticə yoxdur.'}
           />
         )}
       </div>

@@ -168,6 +168,7 @@ export const translations = {
     heroes_equip_fail: 'Təchiz etmək mümkün olmadı',
     heroes_levelup_success: 'Qəhrəman təkmilləşdirildi!',
     heroes_levelup_fail: 'Təkmilləşdirmək mümkün olmadı',
+    heroes_chest_fail: 'Sandığı açmaq mümkün olmadı',
 
     // City Selection Page
     city_title: 'Şəhər Seçimi',
@@ -185,6 +186,7 @@ export const translations = {
     leaderboard_xp: 'XP',
     leaderboard_points: 'XAL',
     leaderboard_load_fail: 'Reytinqləri yükləmək mümkün olmadı',
+    empty_state_title: 'Məlumat tapılmadı',
   },
   ru: {
     // Navigation
@@ -353,6 +355,7 @@ export const translations = {
     heroes_equip_fail: 'Не удалось экипировать героя',
     heroes_levelup_success: 'Герой успешно улучшен!',
     heroes_levelup_fail: 'Не удалось улучшить героя',
+    heroes_chest_fail: 'Не удалось открыть сундук',
 
     // City Selection Page
     city_title: 'Выбор Города',
@@ -370,5 +373,6 @@ export const translations = {
     leaderboard_xp: 'XP',
     leaderboard_points: 'ОЧКИ',
     leaderboard_load_fail: 'Не удалось загрузить рейтинги',
+    empty_state_title: 'Нет данных',
   }
 };

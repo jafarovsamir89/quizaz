@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles, Plus, ChevronUp, RefreshCw } from 'lucide-react';
 import { heroesApi } from '../shared/api';
 import { useAuthStore } from '../features/auth/authStore';
 import { useToast } from '../shared/ui/Toast';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const HeroesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export const HeroesPage: React.FC = () => {
   const { showToast } = useToast();
   const [myHeroes, setMyHeroes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t, lang } = useTranslation();
 
   // Chest animation states
   const [openingChest, setOpeningChest] = useState(false);
@@ -22,7 +24,7 @@ export const HeroesPage: React.FC = () => {
       const myRes = await heroesApi.getMy();
       setMyHeroes(myRes.data);
     } catch {
-      showToast('Kartları yükləmək mümkün olmadı', 'error');
+      showToast(t('heroes_load_fail'), 'error');
     } finally {
       setLoading(false);
     }
@@ -35,10 +37,10 @@ export const HeroesPage: React.FC = () => {
   const handleEquip = async (userHeroId: string, currentlyEquipped: boolean) => {
     try {
       await heroesApi.equip(userHeroId, !currentlyEquipped);
-      showToast(currentlyEquipped ? 'Qəhrəman çıxarıldı' : 'Qəhrəman təchiz edildi!', 'success');
+      showToast(currentlyEquipped ? (lang === 'ru' ? 'Герой снят' : 'Qəhrəman çıxarıldı') : (lang === 'ru' ? 'Герой экипирован!' : 'Qəhrəman təchiz edildi!'), 'success');
       fetchData();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Təchiz etmək mümkün olmadı';
+      const msg = err?.response?.data?.message || t('heroes_equip_fail');
       showToast(msg, 'error');
     }
   };
@@ -50,10 +52,10 @@ export const HeroesPage: React.FC = () => {
       const res = await heroesApi.openChest();
       setRolledHero(res.data.rolledHero);
       updateUser({ balanceCoins: res.data.balanceCoins });
-      showToast(`Yeni qəhrəman əldə edildi!`, 'success');
+      showToast(lang === 'ru' ? 'Получен новый герой!' : 'Yeni qəhrəman əldə edildi!', 'success');
       fetchData();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Sandığı açmaq mümkün olmadı';
+      const msg = err?.response?.data?.message || t('heroes_chest_fail');
       showToast(msg, 'error');
       setOpeningChest(false);
     }
@@ -63,27 +65,27 @@ export const HeroesPage: React.FC = () => {
     try {
       const res = await heroesApi.levelUp(userHeroId);
       updateUser({ balanceCoins: res.data.balanceCoins });
-      showToast('Qəhrəman səviyyəsi artırıldı! 🔥', 'success');
+      showToast(lang === 'ru' ? 'Уровень героя повышен! 🔥' : 'Qəhrəman səviyyəsi artırıldı! 🔥', 'success');
       fetchData();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Təkmilləşdirmək mümkün olmadı';
+      const msg = err?.response?.data?.message || t('heroes_levelup_fail');
       showToast(msg, 'error');
     }
   };
 
   const getRarityBadge = (rarity: string) => {
     let color = 'rgba(255,255,255,0.4)';
-    let text = 'Ümumi';
+    let text = lang === 'ru' ? 'Обычный' : 'Ümumi';
 
     if (rarity === 'legendary') {
       color = '#FFD700';
-      text = 'Əfsanəvi';
+      text = lang === 'ru' ? 'Легендарный' : 'Əfsanəvi';
     } else if (rarity === 'epic') {
       color = '#A335EE';
-      text = 'Epik';
+      text = lang === 'ru' ? 'Эпический' : 'Epik';
     } else if (rarity === 'rare') {
       color = '#0070DD';
-      text = 'Nadir';
+      text = lang === 'ru' ? 'Редкий' : 'Nadir';
     }
 
     return (
@@ -121,18 +123,18 @@ export const HeroesPage: React.FC = () => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: 0 }}>Qəhrəman Kartları</h1>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Xüsusi bonuslar və gücləndiricilər</p>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: 0 }}>{t('nav_heroes')}</h1>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{lang === 'ru' ? 'Особые бонусы и усилители' : 'Xüsusi bonuslar və gücləndiricilər'}</p>
           </div>
         </div>
         <div style={{ background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.2)', padding: '0.35rem 0.75rem', borderRadius: 99, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-gold)' }}>{user?.balanceCoins}</span>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Qızıl</span>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Монет' : 'Qızıl'}</span>
         </div>
       </div>
 
       {/* Deck / Equipped Cards Slots */}
-      <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.65rem', fontWeight: 700 }}>Təchiz Edilmiş Deck ({equippedHeroes.length}/3)</h3>
+      <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.65rem', fontWeight: 700 }}>{lang === 'ru' ? 'Экипированная колода' : 'Təchiz Edilmiş Deck'} ({equippedHeroes.length}/3)</h3>
       <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.5rem' }}>
         {[0, 1, 2].map((slotIdx) => {
           const equipped = equippedHeroes[slotIdx];
@@ -155,11 +157,11 @@ export const HeroesPage: React.FC = () => {
               </button>
               <img 
                 src={equipped.hero.imageUrl} 
-                alt={equipped.hero.nameAz} 
+                alt={lang === 'ru' ? equipped.hero.nameEn : equipped.hero.nameAz} 
                 style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', marginBottom: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}
               />
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fff', textAlign: 'center', width: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {equipped.hero.nameAz}
+                {lang === 'ru' ? equipped.hero.nameEn : equipped.hero.nameAz}
               </span>
               <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Lvl {equipped.level}</span>
             </div>
@@ -173,7 +175,7 @@ export const HeroesPage: React.FC = () => {
               }}
             >
               <Plus size={16} style={{ marginBottom: '0.25rem' }} />
-              Boş Slot
+              {lang === 'ru' ? 'Пустой слот' : 'Boş Slot'}
             </div>
           );
         })}
@@ -194,8 +196,8 @@ export const HeroesPage: React.FC = () => {
               <Sparkles size={22} />
             </div>
             <div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', margin: 0 }}>Milli Sandıq (Qəhrəman Kartı)</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>Təsadüfi bir qəhrəman kartı qazan!</p>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', margin: 0 }}>{lang === 'ru' ? 'Национальный сундук (Карта героя)' : 'Milli Sandıq (Qəhrəman Kartı)'}</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.1rem 0 0 0' }}>{lang === 'ru' ? 'Выиграй случайную карту героя!' : 'Təsadüfi bir qəhrəman kartı qazan!'}</p>
             </div>
           </div>
           <button 
@@ -203,18 +205,18 @@ export const HeroesPage: React.FC = () => {
             className="btn-primary"
             style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.75rem', minHeight: 'unset' }}
           >
-            Aç (500 Qızıl)
+            {lang === 'ru' ? 'Открыть (500 Монет)' : 'Aç (500 Qızıl)'}
           </button>
         </div>
       </div>
 
       {/* Cards List */}
-      <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.65rem', fontWeight: 700 }}>Bütün Kartlarınız ({myHeroes.length})</h3>
+      <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.65rem', fontWeight: 700 }}>{lang === 'ru' ? 'Все ваши карты' : 'Bütün Kartlarınız'} ({myHeroes.length})</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1, overflowY: 'auto' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Kartlar yüklənir...</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('loading')}</div>
         ) : myHeroes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Hələ heç bir qəhrəman kartınız yoxdur. Sandıq açaraq ilk kartınızı əldə edin!</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{lang === 'ru' ? 'У вас пока нет карт героев. Откройте сундук, чтобы получить первую карту!' : 'Hələ heç bir qəhrəman kartınız yoxdur. Sandıq açaraq ilk kartınızı əldə edin!'}</div>
         ) : (
           myHeroes.map((item) => {
             const isEquipped = item.isEquipped;
@@ -235,22 +237,22 @@ export const HeroesPage: React.FC = () => {
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <img 
                     src={item.hero.imageUrl} 
-                    alt={item.hero.nameAz} 
+                    alt={lang === 'ru' ? item.hero.nameEn : item.hero.nameAz} 
                     style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', margin: 0 }}>{item.hero.nameAz}</h4>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', margin: 0 }}>{lang === 'ru' ? item.hero.nameEn : item.hero.nameAz}</h4>
                       {getRarityBadge(item.hero.rarity)}
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>
-                      Səviyyə {item.level} • Nüsxə: <span style={{ color: item.copies >= nextLevelCopies ? 'var(--success)' : '#fff', fontWeight: 700 }}>{item.copies}/{nextLevelCopies}</span>
+                      {lang === 'ru' ? 'Уровень' : 'Səviyyə'} {item.level} • {lang === 'ru' ? 'Копий' : 'Nüsxə'}: <span style={{ color: item.copies >= nextLevelCopies ? 'var(--success)' : '#fff', fontWeight: 700 }}>{item.copies}/{nextLevelCopies}</span>
                     </p>
                   </div>
                 </div>
 
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', lineHeight: '1.25rem', margin: 0, padding: '0.5rem', background: 'rgba(0,0,0,0.15)', borderRadius: 10 }}>
-                  {item.hero.descriptionAz}
+                  {lang === 'ru' ? item.hero.descriptionEn : item.hero.descriptionAz}
                 </p>
 
                 {/* Actions */}
@@ -263,7 +265,7 @@ export const HeroesPage: React.FC = () => {
                       color: isEquipped ? '#FF4747' : '#000', border: 'none', borderRadius: 10, cursor: 'pointer'
                     }}
                   >
-                    {isEquipped ? 'Çıxar' : 'Təchiz Et'}
+                    {isEquipped ? (lang === 'ru' ? 'Снять' : 'Çıxar') : (lang === 'ru' ? 'Экипировать' : 'Təchiz Et')}
                   </button>
                   <button 
                     onClick={() => handleLevelUp(item.id)}
@@ -277,7 +279,7 @@ export const HeroesPage: React.FC = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem'
                     }}
                   >
-                    <ChevronUp size={14} /> Təkmilləşdir ({nextLevelGold} Q)
+                    <ChevronUp size={14} /> {lang === 'ru' ? 'Улучшить' : 'Təkmilləşdir'} ({nextLevelGold} {lang === 'ru' ? 'М' : 'Q'})
                   </button>
                 </div>
               </div>
@@ -292,13 +294,13 @@ export const HeroesPage: React.FC = () => {
           {!rolledHero ? (
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
               <RefreshCw size={44} className="animate-spin" style={{ color: 'var(--primary-gold)' }} />
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 850, color: '#fff', margin: 0 }}>Sandıq Açılır...</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Milli güclər çağırılır!</p>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 850, color: '#fff', margin: 0 }}>{lang === 'ru' ? 'Сундук открывается...' : 'Sandıq Açılır...'}</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{lang === 'ru' ? 'Призыв национальных сил!' : 'Milli güclər çağırılır!'}</p>
             </div>
           ) : (
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem', animation: 'scaleUp 0.4s ease-out', maxWidth: 300 }}>
               <Sparkles size={48} style={{ color: 'var(--primary-gold)' }} />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--primary-gold)', margin: 0 }}>TƏBRİKLƏR!</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--primary-gold)', margin: 0 }}>{lang === 'ru' ? 'ПОЗДРАВЛЯЕМ!' : 'TƏBRİKLƏR!'}</h2>
               
               <div 
                 className="glass-card"
@@ -310,13 +312,13 @@ export const HeroesPage: React.FC = () => {
               >
                 <img 
                   src={rolledHero.imageUrl} 
-                  alt={rolledHero.nameAz} 
+                  alt={lang === 'ru' ? rolledHero.nameEn : rolledHero.nameAz} 
                   style={{ width: 100, height: 100, borderRadius: 20, objectFit: 'cover', border: '2px solid rgba(255,255,255,0.1)' }}
                 />
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fff', margin: 0 }}>{rolledHero.nameAz}</h3>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fff', margin: 0 }}>{lang === 'ru' ? rolledHero.nameEn : rolledHero.nameAz}</h3>
                 {getRarityBadge(rolledHero.rarity)}
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.75rem', margin: '0.5rem 0 0 0', lineHeight: '1.25rem' }}>
-                  {rolledHero.descriptionAz}
+                  {lang === 'ru' ? rolledHero.descriptionEn : rolledHero.descriptionAz}
                 </p>
               </div>
 
@@ -325,7 +327,7 @@ export const HeroesPage: React.FC = () => {
                 className="btn-primary"
                 style={{ width: '100%', padding: '0.65rem' }}
               >
-                Super! Kartı Yadda Saxla
+                {lang === 'ru' ? 'Супер! Сохранить карту' : 'Super! Kartı Yadda Saxla'}
               </button>
             </div>
           )}

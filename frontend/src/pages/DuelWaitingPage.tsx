@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDuelStore } from '../features/duels/duelStore';
 import { Button } from '../shared/ui/Button';
 import { Clock, Home, RefreshCw } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -11,6 +12,7 @@ export const DuelWaitingPage: React.FC = () => {
   const navigate = useNavigate();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const { t } = useTranslation();
 
   const checkResult = async () => {
     if (!currentDuelId) return;
@@ -72,30 +74,30 @@ export const DuelWaitingPage: React.FC = () => {
           )}
         </div>
 
-        <h1 className="text-2xl font-bold mb-4 text-center">Rəqib Gözlənilir</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">{t('wait_title')}</h1>
         <p className="text-text-muted text-center px-6 mb-12">
-          Siz öz suallarınızı bitirdiniz. Rəqibin cavablandırmasını avtomatik yoxlayırıq.
+          {t('wait_desc')}
         </p>
 
         <div className="w-full glass-card border-secondary-blue/20 p-6 mb-12 text-center">
-          <div className="text-sm text-text-muted uppercase tracking-widest mb-1">Sizin Hesabınız</div>
+          <div className="text-sm text-text-muted uppercase tracking-widest mb-1">{t('wait_my_score')}</div>
           <div className="text-4xl font-bold text-secondary-blue">{myScore ?? 0}</div>
         </div>
 
         <div className="w-full space-y-4">
           <Button onClick={checkResult} className="w-full h-14 flex items-center justify-center gap-2">
             <RefreshCw size={20} />
-            İndi Yoxla
+            {t('wait_check_now')}
           </Button>
           <Button variant="secondary" onClick={handleHome} className="w-full h-14 flex items-center justify-center gap-2">
             <Home size={20} />
-            Ana Səhifəyə Dön
+            {t('wait_home')}
           </Button>
         </div>
       </div>
 
       <div className="text-center text-xs text-text-muted py-4">
-        Hər 5 saniyədə bir avtomatik yoxlanılır • Duel 24 saat ərzində qüvvədədir
+        {t('wait_footer')}
       </div>
     </div>
   );

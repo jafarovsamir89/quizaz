@@ -4,11 +4,13 @@ import { useDuelStore } from '../features/duels/duelStore';
 import { useAuthStore } from '../features/auth/authStore';
 import { Button } from '../shared/ui/Button';
 import { Trophy, Swords, Home, Coins } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const DuelResultPage: React.FC = () => {
   const { results, reset, role } = useDuelStore();
   const { user, sync } = useAuthStore();
   const navigate = useNavigate();
+  const { t, lang } = useTranslation();
 
   const isWinner = results?.winnerId === user?.id;
   const isDraw = !results?.winnerId && results?.status === 'finished';
@@ -40,19 +42,19 @@ export const DuelResultPage: React.FC = () => {
         </div>
 
         <h1 className="text-3xl font-bold mb-2">
-          {isWinner ? 'Qələbə! 🏆' : isDraw ? 'Heç-heçə!' : 'Məğlubiyyət'}
+          {isWinner ? t('res_victory') : isDraw ? t('res_draw') : t('res_defeat')}
         </h1>
-        <p className="text-text-muted mb-12">Duel başa çatdı</p>
+        <p className="text-text-muted mb-12">{lang === 'ru' ? 'Дуэль завершена' : 'Duel başa çatdı'}</p>
 
         {/* Score */}
         <div className="w-full glass-card flex items-center justify-around py-8 mb-8">
           <div className="text-center">
-            <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Sən</div>
+            <div className="text-xs text-text-muted uppercase tracking-widest mb-2">{t('res_you')}</div>
             <div className="text-4xl font-bold">{myScore ?? 0}</div>
           </div>
           <div className="text-2xl font-bold text-text-muted">:</div>
           <div className="text-center">
-            <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Rəqib</div>
+            <div className="text-xs text-text-muted uppercase tracking-widest mb-2">{t('res_opponent')}</div>
             <div className="text-4xl font-bold">{opponentScore ?? 0}</div>
           </div>
         </div>
@@ -62,10 +64,10 @@ export const DuelResultPage: React.FC = () => {
           <div className="stat-badge w-full justify-between py-4 px-6 border-primary-gold/20 text-primary-gold">
             <div className="flex items-center gap-3">
               <Coins size={20} />
-              <span className="font-bold">Mükafat</span>
+              <span className="font-bold">{lang === 'ru' ? 'Награда' : 'Mükafat'}</span>
             </div>
             <span className="font-bold">
-              +{results.prizeCoins ?? (isWinner ? 20 : isDraw ? 10 : 5)} Qızıl
+              +{results.prizeCoins ?? (isWinner ? 20 : isDraw ? 10 : 5)} {lang === 'ru' ? 'Монет' : 'Qızıl'}
             </span>
           </div>
         </div>
@@ -76,7 +78,7 @@ export const DuelResultPage: React.FC = () => {
           <Home size={20} />
         </Button>
         <Button onClick={handleDone} className="flex-[3] h-16 text-lg">
-          Davam Et
+          {lang === 'ru' ? 'Продолжить' : 'Davam Et'}
         </Button>
       </div>
     </div>

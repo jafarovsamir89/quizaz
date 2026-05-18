@@ -4,11 +4,13 @@ import { useGameStore } from '../features/solo/gameStore';
 import { useAuthStore } from '../features/auth/authStore';
 import { Button } from '../shared/ui/Button';
 import { Trophy, Coins, Zap, CheckCircle2, XCircle, Star } from 'lucide-react';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const SoloResultPage: React.FC = () => {
   const { results, reset } = useGameStore();
   const { sync } = useAuthStore();
   const navigate = useNavigate();
+  const { t, lang } = useTranslation();
 
   const handleDone = async () => {
     try { await sync(); } catch {}
@@ -35,9 +37,13 @@ export const SoloResultPage: React.FC = () => {
           <Trophy size={42} />
         </div>
 
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.3rem' }}>Oyun Başa Çatdı!</h1>
+        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.3rem' }}>{t('solo_res_title')}</h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.9rem' }}>
-          {accuracy >= 80 ? 'Möhtəşəm nəticə! 🔥' : accuracy >= 50 ? 'Yaxşı oyun! 👏' : 'Davam et, inkişaf edəcəksən! 💪'}
+          {accuracy >= 80 
+            ? (lang === 'ru' ? 'Великолепный результат! 🔥' : 'Möhtəşəm nəticə! 🔥') 
+            : accuracy >= 50 
+              ? (lang === 'ru' ? 'Хорошая игра! 👏' : 'Yaxşı oyun! 👏') 
+              : (lang === 'ru' ? 'Продолжай в том же духе! 💪' : 'Davam et, inkişaf edəcəksən! 💪')}
         </p>
 
         {/* Score cards */}
@@ -45,12 +51,12 @@ export const SoloResultPage: React.FC = () => {
           <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', padding: '1rem' }}>
             <CheckCircle2 size={22} style={{ color: 'var(--success)' }} />
             <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{results.correctCount}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Düzgün</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{t('solo_res_correct')}</div>
           </div>
           <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', padding: '1rem' }}>
             <XCircle size={22} style={{ color: 'var(--error)' }} />
             <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{results.wrongCount}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Səhv</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{t('solo_res_wrong')}</div>
           </div>
         </div>
 
@@ -59,7 +65,7 @@ export const SoloResultPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Star size={17} style={{ color: 'var(--secondary-blue)' }} />
-              <span style={{ fontSize: '0.9rem' }}>Ümumi Xal</span>
+              <span style={{ fontSize: '0.9rem' }}>{t('solo_res_score')}</span>
             </div>
             <span style={{ fontWeight: 700 }}>{results.totalScore}</span>
           </div>
@@ -67,7 +73,7 @@ export const SoloResultPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Coins size={17} style={{ color: 'var(--primary-gold)' }} />
-              <span style={{ fontSize: '0.9rem' }}>Qazanılan Qızıl</span>
+              <span style={{ fontSize: '0.9rem' }}>{t('solo_res_coins')}</span>
             </div>
             <span style={{ fontWeight: 700, color: 'var(--primary-gold)' }}>+{results.coinsEarned}</span>
           </div>
@@ -75,7 +81,7 @@ export const SoloResultPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Zap size={17} style={{ color: 'var(--accent-violet)' }} />
-              <span style={{ fontSize: '0.9rem' }}>XP</span>
+              <span style={{ fontSize: '0.9rem' }}>{t('solo_res_xp')}</span>
             </div>
             <span style={{ fontWeight: 700, color: 'var(--accent-violet)' }}>+{results.xpEarned}</span>
           </div>
@@ -84,7 +90,7 @@ export const SoloResultPage: React.FC = () => {
 
       <div style={{ paddingBottom: '1rem' }}>
         <Button onClick={handleDone} style={{ width: '100%', height: 56, fontSize: '1.05rem' }}>
-          Ana Səhifəyə Dön
+          {t('solo_res_home')}
         </Button>
       </div>
     </div>

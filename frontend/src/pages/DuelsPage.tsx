@@ -8,6 +8,7 @@ import { useAuthStore } from '../features/auth/authStore';
 import { EmptyState } from '../shared/ui/EmptyState';
 import { useToast } from '../shared/ui/Toast';
 import type { Duel } from '../shared/types';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const DuelsPage: React.FC = () => {
   const [myDuels, setMyDuels] = useState<Duel[]>([]);
@@ -16,6 +17,7 @@ export const DuelsPage: React.FC = () => {
   const { findOrCreate } = useDuelStore();
   const { user } = useAuthStore();
   const { showToast } = useToast();
+  const { t, lang } = useTranslation();
 
   useEffect(() => {
     loadDuels();
@@ -27,7 +29,7 @@ export const DuelsPage: React.FC = () => {
       const res = await duelsApi.getMyDuels();
       setMyDuels(res.data);
     } catch {
-      showToast('Duellər yüklənmədi', 'error');
+      showToast(t('duels_load_fail'), 'error');
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ export const DuelsPage: React.FC = () => {
         return;
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Duelə qoşulmaq mümkün olmadı';
+      const msg = err?.response?.data?.message || t('duels_join_fail');
       showToast(msg, 'error');
     } finally {
       setLoading(false);
@@ -65,11 +67,11 @@ export const DuelsPage: React.FC = () => {
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'finished':
-        return { label: 'Başa Çatıb', color: 'var(--success)', bg: 'rgba(0,230,118,0.12)' };
+        return { label: t('duels_status_finished'), color: 'var(--success)', bg: 'rgba(0,230,118,0.12)' };
       case 'active':
-        return { label: 'Aktiv', color: 'var(--secondary-blue)', bg: 'rgba(0,191,255,0.12)' };
+        return { label: t('duels_status_active'), color: 'var(--secondary-blue)', bg: 'rgba(0,191,255,0.12)' };
       case 'pending':
-        return { label: 'Gözləyir', color: 'var(--primary-gold)', bg: 'rgba(255,215,0,0.08)' };
+        return { label: t('duels_status_pending'), color: 'var(--primary-gold)', bg: 'rgba(255,215,0,0.08)' };
       default:
         return { label: status, color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.05)' };
     }
@@ -77,7 +79,7 @@ export const DuelsPage: React.FC = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1.5rem', overflow: 'auto' }}>
-      <h1 style={{ marginBottom: '1.25rem' }}>Duellər</h1>
+      <h1 style={{ marginBottom: '1.25rem' }}>{t('duels_title')}</h1>
 
       {/* CTA Card */}
       <div
@@ -99,17 +101,17 @@ export const DuelsPage: React.FC = () => {
         >
           <Swords size={32} />
         </div>
-        <h2 style={{ marginBottom: '0.5rem' }}>Arena Səni Gözləyir</h2>
+        <h2 style={{ marginBottom: '0.5rem' }}>{lang === 'ru' ? 'Арена ждет тебя' : 'Arena Səni Gözləyir'}</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-          Təsadüfi rəqiblə yarış və bacarığını göstər
+          {t('duels_arena_desc')}
         </p>
         <Button onClick={handleStartDuel} isLoading={loading} style={{ width: '100%' }}>
-          Rəqib Tap
+          {t('duels_find_opp')}
         </Button>
       </div>
 
       {/* My Duels */}
-      <h3 style={{ fontWeight: 700, marginBottom: '0.75rem' }}>Mənim Duellərim</h3>
+      <h3 style={{ fontWeight: 700, marginBottom: '0.75rem' }}>{t('duels_my_duels')}</h3>
       <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
@@ -141,7 +143,7 @@ export const DuelsPage: React.FC = () => {
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                      {opponentName || 'Rəqib gözlənilir...'}
+                      {opponentName || (lang === 'ru' ? 'Ожидание соперника...' : 'Rəqib gözlənilir...')}
                     </div>
                     <span style={{ fontSize: 10, textTransform: 'uppercase', fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: st.bg, color: st.color }}>
                       {st.label}
@@ -149,7 +151,7 @@ export const DuelsPage: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>HESAB</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{t('duels_score')}</div>
                   <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.1rem' }}>
                     {isInitiator ? duel.initiatorScore : duel.opponentScore}
                     {' : '}
@@ -162,8 +164,8 @@ export const DuelsPage: React.FC = () => {
         ) : (
           <EmptyState
             icon={<Swords size={44} />}
-            title="Aktiv duel yoxdur"
-            description="Yeni rəqib tapmaq üçün yuxarıdakı düyməni sıxın."
+            title={t('duels_empty_title')}
+            description={t('duels_empty_desc')}
           />
         )}
       </div>

@@ -5,6 +5,7 @@ import { useAuthStore } from '../features/auth/authStore';
 import { useDuelStore } from '../features/duels/duelStore';
 import { Swords, X } from 'lucide-react';
 import { useToast } from '../shared/ui/Toast';
+import { useTranslation } from '../shared/i18n/useTranslation';
 
 export const DuelMatchmakingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export const DuelMatchmakingPage: React.FC = () => {
   const { showToast } = useToast();
   const [status, setStatus] = useState<'connecting' | 'searching' | 'matched'>('connecting');
   const socketRef = useRef<Socket | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!user) {
@@ -45,7 +47,7 @@ export const DuelMatchmakingPage: React.FC = () => {
 
     socket.on('duel_matched', (data: { duelId: string; opponentId: string; duel: any }) => {
       setStatus('matched');
-      showToast('Rəqib tapıldı! Oyun başlayır...', 'success');
+      showToast(t('match_success_toast'), 'success');
 
       // Populate Zustand store
       // Res has { duelId, status, questions, role, expiresAt } in duel object
@@ -73,14 +75,14 @@ export const DuelMatchmakingPage: React.FC = () => {
         socket.disconnect();
       }
     };
-  }, [user, navigate, showToast]);
+  }, [user, navigate, showToast, t]);
 
   const handleCancel = () => {
     if (socketRef.current) {
       socketRef.current.emit('leave_lobby', { userId: user?.id });
       socketRef.current.disconnect();
     }
-    showToast('Axtarış ləğv edildi', 'info');
+    showToast(t('match_cancelled_toast'), 'info');
     navigate('/duels');
   };
 
@@ -127,10 +129,10 @@ export const DuelMatchmakingPage: React.FC = () => {
       </div>
 
       <h2 style={{ fontSize: '1.35rem', fontWeight: 850, color: '#fff', margin: '0 0 0.5rem 0' }}>
-        {status === 'connecting' ? 'Şəbəkəyə Qoşulur...' : status === 'matched' ? 'Rəqib Tapıldı!' : 'Rəqib Axtarılır'}
+        {status === 'connecting' ? t('match_connecting') : status === 'matched' ? t('match_matched') : t('match_searching')}
       </h2>
       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 2rem 0', maxWidth: 280, lineHeight: '1.35rem' }}>
-        {status === 'connecting' ? 'Bilik Arenası PvP lobby serverinə qoşulur...' : status === 'matched' ? 'Arena hazırlanır, zəhmət olmasa gözləyin.' : 'Eyni səviyyəli rəqiblərdən biri tapılır. Bu bir neçə saniyə çəkə bilər.'}
+        {status === 'connecting' ? t('match_connecting_desc') : status === 'matched' ? t('match_matched_desc') : t('match_searching_desc')}
       </p>
 
       {status !== 'matched' && (
@@ -146,7 +148,7 @@ export const DuelMatchmakingPage: React.FC = () => {
           onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,71,71,0.12)')}
           onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
         >
-          <X size={16} /> Axtarışı Ləğv Et
+          <X size={16} /> {t('match_cancel')}
         </button>
       )}
     </div>
